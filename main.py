@@ -1,19 +1,42 @@
+# -*- coding: utf-8 -*-
 import sys
 import os
 import ctypes
 import threading
 import string
-from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel,
-                               QTextEdit, QWidget, QVBoxLayout, QHBoxLayout,
-                               QGridLayout, QFrame, QGraphicsDropShadowEffect,
-                               QStackedWidget, QButtonGroup, QFileDialog, QMessageBox)
-# Adicionado QIcon aqui na linha abaixo!
-from PySide6.QtGui import QCursor, QColor, QPainter, QPainterPath, QPen, QPixmap, QIcon
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSequentialAnimationGroup, Signal, QObject, QUrl, QThread
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+import traceback
 
-import optimizer as opt
-import monitor
+# --- O TOQUE FINAL PARA O ÍCONE NA BARRA DE TAREFAS ---
+# Isso avisa o Windows quem é o dono do app ANTES da interface carregar
+try:
+    meu_app_id = 'cbm.aikaoptimizer.v3'
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(meu_app_id)
+except Exception:
+    pass
+# -----------------------------------------------------
+
+try:
+    from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel,
+                                   QTextEdit, QWidget, QVBoxLayout, QHBoxLayout,
+                                   QGridLayout, QFrame, QGraphicsDropShadowEffect,
+                                   QStackedWidget, QButtonGroup, QFileDialog, QMessageBox,
+                                   QSystemTrayIcon, QMenu)
+    from PySide6.QtGui import QCursor, QColor, QPainter, QPainterPath, QPen, QPixmap, QIcon
+    from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSequentialAnimationGroup, Signal, QObject, QUrl, QThread, QTimer
+    from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+
+    # Importação à prova de falhas para o QAction (dependendo da versão do teu PySide6)
+    try:
+        from PySide6.QtGui import QAction
+    except ImportError:
+        from PySide6.QtWidgets import QAction
+
+    import optimizer as opt
+
+except Exception as e:
+    ctypes.windll.user32.MessageBoxW(0, f"Erro nas importações iniciais:\n\n{traceback.format_exc()}", "Crash Report - Aika Optimizer", 0x10)
+    sys.exit(1)
+
 
 def is_admin():
     try:
@@ -21,96 +44,31 @@ def is_admin():
     except Exception:
         return False
 
-# BÚSSOLA DE CAMINHOS DO PYINSTALLER
 def resolver_caminho(caminho_relativo):
-    """Retorna o caminho absoluto compatível com PyInstaller e VS Code"""
     try:
-        # PyInstaller cria uma pasta temporária em _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, caminho_relativo)
 
 class TarefaWorker(QThread):
     def __init__(self, func):
         super().__init__()
         self.func = func
+        self._is_cancelled = False
+
+    def cancel(self):
+        self._is_cancelled = True
 
     def run(self):
-        try:
-            self.func()
-        except Exception:
-            pass
+        if not self._is_cancelled:
+            try:
+                self.func()
+            except Exception:
+                pass
 
 class SinaisUI(QObject):
     log_signal = Signal(str)
-    monitor_signal = Signal(int, str, float, float)
-
-class GraficoPing(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setFixedSize(90, 25)
-        self.historico = [0] * 20
-
-    def atualizar(self, ping):
-        if ping is None or ping > 999:
-            ping = 0
-        self.historico.pop(0)
-        self.historico.append(ping)
-        self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 100))
-        path = QPainterPath()
-        w, h = self.width(), self.height()
-        passo_x = w / (len(self.historico) - 1)
-        max_ping = max(100, max(self.historico))
-
-        for i, p in enumerate(self.historico):
-            x = i * passo_x
-            y = h - ((p / max_ping) * h)
-            y = max(2, min(h - 2, y))
-            if i == 0:
-                path.moveTo(x, y)
-            else:
-                path.lineTo(x, y)
-
-        pen = QPen(QColor(191, 0, 255))
-        pen.setWidth(2)
-        painter.setPen(pen)
-        painter.drawPath(path)
-
-class OverlayPing(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.lbl = QLabel("Ping: -- ms")
-        self.lbl.setStyleSheet("color: #00ff00; font-family: Consolas; font-size: 16px; font-weight: bold; background: rgba(10,10,15,200); padding: 8px 15px; border-radius: 8px; border: 2px solid #BF00FF;")
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.lbl)
-        self.move(20, 20)
-        self.dragPos = None
-
-    def atualizar(self, p, c):
-        self.lbl.setText(f"Ping: {p} ms")
-        cor_atual = f"color: {c};"
-        if cor_atual not in self.lbl.styleSheet():
-            self.lbl.setStyleSheet(f"{cor_atual} font-family: Consolas; font-size: 16px; font-weight: bold; background: rgba(10,10,15,200); padding: 8px 15px; border-radius: 8px; border: 2px solid #BF00FF;")
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.dragPos = event.globalPosition().toPoint()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.LeftButton and self.dragPos:
-            delta = event.globalPosition().toPoint() - self.dragPos
-            self.move(self.pos() + delta)
-            self.dragPos = event.globalPosition().toPoint()
-            event.accept()
 
 class AikaCardGlow(QWidget):
     def __init__(self, parent, image_path, titulo):
@@ -134,8 +92,8 @@ class AikaCardGlow(QWidget):
         if not pixmap.isNull():
             self.lbl_image.setPixmap(pixmap.scaled(145, 145, Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
         else:
-            self.lbl_image.setText("ERRO")
-            self.lbl_image.setStyleSheet("color: red; font-weight: bold;")
+            self.lbl_image.setText("AIKA")
+            self.lbl_image.setStyleSheet("color: #BF00FF; font-weight: bold; font-size: 20px;")
 
         layout_caixa.addWidget(self.lbl_image)
 
@@ -149,38 +107,80 @@ class AikaCardGlow(QWidget):
 class AikaOptimizerPro(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Aika Optimizer Pro V2.0")
-        self.resize(1100, 750)
+        self.setWindowTitle("AIKA OPTIMIZER V3.0")
+        self.resize(1024, 680)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # SETANDO O ÍCONE DA JANELA E BARRA DE TAREFAS
         caminho_icone = resolver_caminho("icone.ico")
         self.setWindowIcon(QIcon(caminho_icone))
 
         self.sinais = SinaisUI()
         self.sinais.log_signal.connect(self.atualizar_log)
-        self.sinais.monitor_signal.connect(self.atualizar_monitor)
 
         self.tarefa_lock = threading.Lock()
         self.executando_tarefa = False
-        self.overlay_ativo = False
-        self.overlay_window = OverlayPing()
         self.dragPos = None
         self.worker = None
 
+        opt.limpar_pasta_temp_audio()
+        opt.ativar_timer_resolution()
+
+        # ========================================================
+        # TRAY ICON (BANDEJA DO SISTEMA - SEGUNDO PLANO)
+        # ========================================================
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon(caminho_icone))
+
+        tray_menu = QMenu()
+        
+        acao_restaurar = QAction("Abrir Aika Optimizer", self)
+        acao_restaurar.triggered.connect(self.showNormal)
+        tray_menu.addAction(acao_restaurar)
+
+        acao_boost = QAction("🚀 Game Boost", self)
+        acao_boost.triggered.connect(self.iniciar_boost_seguro)
+        tray_menu.addAction(acao_boost)
+
+        tray_menu.addSeparator()
+
+        acao_sair = QAction("Sair", self)
+        acao_sair.triggered.connect(self.fechar_app)
+        tray_menu.addAction(acao_sair)
+
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.activated.connect(self.clique_na_tray)
+        self.tray_icon.show()
+        # ========================================================
+
+        # PADRONIZAÇÃO DOS BOTÕES COM HOVER DO MAC_OS (100% SEGURO)
         estilo_global = """
+            * { font-family: 'Segoe UI', 'Roboto', 'Open Sans', sans-serif; }
             QWidget#CentralWidget { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #050508, stop:1 #111118); border: 2px solid #2A004D; border-radius: 18px; }
             QLabel#Titulo { color: white; font-size: 22px; font-weight: bold; letter-spacing: 1px; }
             QFrame#AikaCard { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0A0A0E, stop:1 #12121A); border: 3px solid #3d0066; border-radius: 20px; }
-            QTextEdit#AikaTerminal { background-color: rgba(5, 5, 8, 200); border: 2px solid #4D0080; border-radius: 12px; color: #BF00FF; font-family: Consolas; font-size: 13px; padding: 10px; }
+            QTextEdit#AikaTerminal { background-color: rgba(5, 5, 8, 200); border: 2px solid #4D0080; border-radius: 12px; color: #BF00FF; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; padding: 10px; }
             QScrollBar:vertical { width: 0px; }
-            QPushButton.WinButton { background-color: transparent; color: #BF00FF; font-size: 16px; font-weight: bold; }
-            QPushButton#BtnClose:hover { background-color: #FF2222; color: white; border-radius: 8px; }
+            
+            /* PADRONIZAÇÃO DOS BOTÕES SUPERIORES */
+            QPushButton.WinButton { 
+                background-color: transparent; 
+                border-radius: 12px; 
+                color: #BF00FF; 
+                font-size: 15px; 
+                font-weight: bold;
+                font-family: 'Arial';
+            }
+            
+            /* Cores macOS no Hover */
+            QPushButton#BtnClose:hover { background-color: #ff605c; color: white; }
+            QPushButton#BtnMin:hover { background-color: #ffbd44; color: #050508; }
+            QPushButton#BtnMax:hover { background-color: #00ca4e; color: white; }
+
             QFrame#Sidebar { background-color: rgba(10, 10, 15, 150); border-right: 2px solid #2A004D; border-radius: 15px; }
             QPushButton.MenuButton { background-color: transparent; color: #888899; text-align: left; padding: 12px 20px; font-size: 15px; font-weight: bold; border: none; border-left: 4px solid transparent; }
             QPushButton.MenuButton:checked { color: #BF00FF; border-left: 4px solid #BF00FF; background-color: rgba(191, 0, 255, 0.1); }
-            QPushButton.ToolButton { background-color: rgba(77, 0, 128, 0.2); border: 1px solid #4D0080; border-radius: 8px; color: white; font-weight: bold; padding: 15px; font-size: 13px; }
+            QPushButton.ToolButton { background-color: rgba(77, 0, 128, 0.2); border: 1px solid #4D0080; border-radius: 8px; color: white; font-weight: bold; padding: 10px 15px; font-size: 13px; }
             QPushButton.ToolButton:hover { background-color: rgba(191, 0, 255, 0.3); border: 1px solid #BF00FF; }
         """
         self.central_widget = QWidget()
@@ -190,52 +190,48 @@ class AikaOptimizerPro(QMainWindow):
         layout_principal = QVBoxLayout(self.central_widget)
 
         layout_titulo = QHBoxLayout()
+        layout_titulo.setContentsMargins(0, 5, 0, 5)
+        
         self.lbl_logo = QLabel()
         logo_pixmap = QPixmap(caminho_icone)
         self.lbl_logo.setPixmap(logo_pixmap.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
-        self.lbl_titulo = QLabel("AIKA OPTIMIZER PRO V2.0")
+        self.lbl_titulo = QLabel("AIKA OPTIMIZER V3.0")
         self.lbl_titulo.setObjectName("Titulo")
 
-        self.lbl_ping = QLabel("Ping: -- ms")
-        self.grafico_ping = GraficoPing()
+        # Layout agrupado para os controles do topo
+        layout_controles = QHBoxLayout()
+        layout_controles.setSpacing(8)
 
-        self.btn_overlay = QPushButton("🖥️ OSD Overlay")
-        self.btn_overlay.setFixedSize(110, 25)
-        self.btn_overlay.setStyleSheet("background-color: rgba(77, 0, 128, 0.5); color: white; border-radius: 5px; font-size: 11px; font-weight: bold; border: 1px solid #BF00FF;")
-        self.btn_overlay.setCursor(QCursor(Qt.PointingHandCursor))
-        self.btn_overlay.clicked.connect(self.toggle_overlay)
-
-        self.lbl_ram = QLabel("RAM: --%")
-        self.lbl_disco = QLabel("Disco: --%")
-
-        estilo_monitor = "color: #00ff00; font-family: Consolas; font-size: 14px; background: rgba(0,0,0,100); padding: 5px; border-radius: 5px;"
-        self.lbl_ping.setStyleSheet(estilo_monitor)
-        self.lbl_ram.setStyleSheet(estilo_monitor.replace("#00ff00", "white"))
-        self.lbl_disco.setStyleSheet(estilo_monitor.replace("#00ff00", "white"))
-
-        btn_min = QPushButton("—")
-        btn_min.setFixedSize(40, 30)
+        # Botão Minimizar (Caractere Hífen)
+        btn_min = QPushButton("-")
+        btn_min.setObjectName("BtnMin")
+        btn_min.setFixedSize(24, 24)
         btn_min.setProperty("class", "WinButton")
-        btn_min.clicked.connect(self.showMinimized)
+        btn_min.clicked.connect(self.minimizar_para_tray)
 
-        btn_close = QPushButton("✕")
+        # Botão Maximizar (Caractere Letra 'O' Maiúscula)
+        self.btn_max = QPushButton("O") 
+        self.btn_max.setObjectName("BtnMax")
+        self.btn_max.setFixedSize(24, 24)
+        self.btn_max.setProperty("class", "WinButton")
+        self.btn_max.clicked.connect(self.alternar_maximizacao)
+
+        # Botão Fechar (Caractere Letra 'X' Maiúscula)
+        btn_close = QPushButton("X")
         btn_close.setObjectName("BtnClose")
-        btn_close.setFixedSize(45, 35)
+        btn_close.setFixedSize(24, 24)
+        btn_close.setProperty("class", "WinButton")
         btn_close.clicked.connect(self.fechar_app)
+
+        layout_controles.addWidget(btn_min)
+        layout_controles.addWidget(self.btn_max)
+        layout_controles.addWidget(btn_close)
 
         layout_titulo.addWidget(self.lbl_logo)
         layout_titulo.addWidget(self.lbl_titulo)
-        layout_titulo.addStretch()
-        layout_titulo.addWidget(self.lbl_ping)
-        layout_titulo.addWidget(self.grafico_ping)
-        layout_titulo.addWidget(self.btn_overlay)
-        layout_titulo.addSpacing(15)
-        layout_titulo.addWidget(self.lbl_ram)
-        layout_titulo.addWidget(self.lbl_disco)
-        layout_titulo.addSpacing(10)
-        layout_titulo.addWidget(btn_min)
-        layout_titulo.addWidget(btn_close)
+        layout_titulo.addStretch() 
+        layout_titulo.addLayout(layout_controles)
         layout_principal.addLayout(layout_titulo)
 
         layout_corpo = QHBoxLayout()
@@ -245,15 +241,19 @@ class AikaOptimizerPro(QMainWindow):
         sidebar.setFixedWidth(200)
         layout_sidebar = QVBoxLayout(sidebar)
         self.grupo_menu = QButtonGroup(self)
+        
         self.btn_aba_performance = self.criar_botao_menu("🚀 Performance", 0)
         self.btn_aba_ferramentas = self.criar_botao_menu("🛠️ Sistema", 1)
         self.btn_aba_automod     = self.criar_botao_menu("📦 AutoMod", 2)
         self.btn_aba_audio       = self.criar_botao_menu("🎵 Áudio", 3)
-        self.btn_aba_restore     = self.criar_botao_menu("🛡️ Segurança", 4)
+        self.btn_aba_extrator_jit= self.criar_botao_menu("🎨 Texturas (.JIT)", 4)
+        self.btn_aba_restore     = self.criar_botao_menu("🛡️ Segurança", 5)
+        
         layout_sidebar.addWidget(self.btn_aba_performance)
         layout_sidebar.addWidget(self.btn_aba_ferramentas)
         layout_sidebar.addWidget(self.btn_aba_automod)
         layout_sidebar.addWidget(self.btn_aba_audio)
+        layout_sidebar.addWidget(self.btn_aba_extrator_jit)
         layout_sidebar.addWidget(self.btn_aba_restore)
         layout_sidebar.addStretch()
         layout_corpo.addWidget(sidebar)
@@ -271,26 +271,27 @@ class AikaOptimizerPro(QMainWindow):
             return caminho_png if os.path.exists(caminho_png) else caminho_jpg
 
         grid_cards = QGridLayout()
-        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Limpeza"), "Limpeza\nProfunda"), 0, 0)
-        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Desempenho"), "Modo\nDesempenho"), 0, 1)
-        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Teclado"), "Reduzir\nInput Lag"), 0, 2)
-        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Rede"), "Estabilidade\nde Rede"), 0, 3)
+        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Desempenho"), "Desativar\nMPO"), 0, 0)
+        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Teclado"), "Isolar\nCPU"), 0, 1)
+        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Rede"), "Turbo\nBoost"), 0, 2) 
+        grid_cards.addWidget(AikaCardGlow(self, obter_imagem("Limpeza"), "Limpar\nCache"), 0, 3)
         layout_perf.addLayout(grid_cards)
 
         layout_perf.addStretch(1)
 
-        desc_perf = QLabel("💡 <b>O que a Otimização faz?</b> Ela executa as melhorias simultaneamente:<br>"
-                           "• <b>Limpeza:</b> Apaga arquivos inúteis temporários do Windows para liberar espaço.<br>"
-                           "• <b>Desempenho:</b> Prioriza o processo do jogo na CPU e define o Perfil de Energia para Máximo.<br>"
-                           "• <b>Teclado:</b> Tira o atraso das teclas, ajudando você a soltar combos de skills mais rapidamente.<br>"
-                           "• <b>Rede:</b> Remove os limites do Windows (Network Throttling) focando na estabilidade.")
+        desc_perf = QLabel("💡 <b>Otimizações Exclusivas da Joy Impact Engine:</b><br>"
+                           "• <b>Desativar MPO:</b> Remove o Multiplane Overlay do Windows, eliminando travamentos e 'flickers' crônicos do DirectX 9.<br>"
+                           "• <b>Isolar CPU:</b> Isola o Aika do Core 0 (núcleo ocupado pelo sistema) para eliminar de vez o Stuttering (engasgos).<br>"
+                           "• <b>Turbo Boost:</b> Eleva a prioridade de renderização gráfica e ativa o Game Booster silencioso, fechando processos inúteis.<br>"
+                           "• <b>Limpar Cache:</b> Apaga arquivos de cache antigos da NVIDIA/AMD, forçando uma renderização limpa e fluida das skills.<br>"
+                           "• <b>Timer Resolution 1ms:</b> Injetado direto no Kernel do Windows para garantir o menor input-lag possível no PvP.")
         desc_perf.setWordWrap(True)
         desc_perf.setStyleSheet("color: #A0A0B0; font-size: 13px; background-color: rgba(255,255,255,10); padding: 12px; border-radius: 8px;")
         desc_perf.setAlignment(Qt.AlignLeft)
         layout_perf.addWidget(desc_perf)
         layout_perf.addSpacing(15)
 
-        self.btn_boost = QPushButton("⚡ INICIAR OTIMIZAÇÃO")
+        self.btn_boost = QPushButton("⚡ INICIAR OTIMIZAÇÃO GLOBAL")
         self.btn_boost.setMinimumHeight(80)
         self.btn_boost.setMinimumWidth(450)
         self.btn_boost.setCursor(QCursor(Qt.PointingHandCursor))
@@ -311,33 +312,38 @@ class AikaOptimizerPro(QMainWindow):
         # --- TELA 1: SISTEMA ---
         page_sys = QWidget()
         layout_sys = QVBoxLayout(page_sys)
-        layout_sys.setSpacing(25)
+        layout_sys.setSpacing(12)
+        
         lbl_sys_t = QLabel("🛠️ Configurações Avançadas do Sistema")
-        lbl_sys_t.setStyleSheet("color: white; font-size: 20px; font-weight: bold; margin-bottom: 10px;")
+        lbl_sys_t.setStyleSheet("color: white; font-size: 20px; font-weight: bold; margin-bottom: 0px;")
         layout_sys.addWidget(lbl_sys_t)
+        
         lbl_dns = QLabel("Seleção de Servidor DNS:")
         lbl_dns.setStyleSheet("color: #BF00FF; font-weight: bold;")
         layout_sys.addWidget(lbl_dns)
+        
         grid_dns = QGridLayout()
         grid_dns.addWidget(self.criar_botao_ferramenta("Google DNS (8.8.8.8)", lambda: self.acao_dns("Google")), 0, 0)
         grid_dns.addWidget(self.criar_botao_ferramenta("Cloudflare DNS (1.1.1.1)", lambda: self.acao_dns("Cloudflare")), 0, 1)
         grid_dns.addWidget(self.criar_botao_ferramenta("Restaurar Padrão", lambda: self.acao_dns("Padrao")), 0, 2)
         layout_sys.addLayout(grid_dns)
 
-        lbl_m = QLabel("Otimizações Aika Online:")
-        lbl_m.setStyleSheet("color: #BF00FF; font-weight: bold;")
+        lbl_m = QLabel("Otimizações Aika Online (Hot-Swap):")
+        lbl_m.setStyleSheet("color: #BF00FF; font-weight: bold; margin-top: 5px;")
         layout_sys.addWidget(lbl_m)
+        
         grid_m = QGridLayout()
-        grid_m.setVerticalSpacing(15)
-        lay_cpu = self.criar_botao_com_desc("🔥 Prioridade Máxima CPU", self.acao_prioridade, "Força o Windows a dedicar o máximo de poder do processador ao Aika.")
-        lay_gb = self.criar_botao_com_desc("🚫 Desativar Game Bar", self.acao_gamebar, "Desliga os recursos pesados do Xbox que rodam no fundo do Windows.")
-        lay_wp = self.criar_botao_com_desc("🗑️ Remover WeaponEff3", self.acao_weapon, "Apaga os efeitos visuais pesados das armas. Ideal para tirar o lag no PvP.")
-        lay_tcp = self.criar_botao_com_desc("⚡ Otimizar Ping (TCP NoDelay)", self.acao_tcp_nodelay, "Envia as informações instantaneamente ao servidor, derrubando o delay.")
+        grid_m.setVerticalSpacing(10)
+        lay_cpu = self.criar_botao_com_desc("🔥 Isolar Núcleos (Afinidade)", self.acao_afinidade, "Se o jogo já estiver aberto, força o processo a desocupar o núcleo 0 imediatamente.")
+        lay_gb = self.criar_botao_com_desc("🚫 Modo Tela Cheia (FSE)", self.acao_gamebar, "Desliga a Game Bar e ativa o Modo Tela Cheia Exclusivo, vital para jogos antigos.")
+        lay_wp = self.criar_botao_com_desc("🗑️ Remover Efeitos Poluídos", self.acao_weapon, "Apaga os arquivos visuais pesados com segurança (ex: WeaponEff3.bin). Elimina o lag visual.")
+        lay_tcp = self.criar_botao_com_desc("⚡ Reduzir Delay (TCP)", self.acao_tcp_nodelay, "Aplica TCP NoDelay na sua placa de rede, enviando pacotes de dados instantaneamente.")
         grid_m.addLayout(lay_cpu, 0, 0)
         grid_m.addLayout(lay_gb, 0, 1)
         grid_m.addLayout(lay_wp, 1, 0)
         grid_m.addLayout(lay_tcp, 1, 1)
         layout_sys.addLayout(grid_m)
+        
         layout_sys.addStretch()
         self.telas.addWidget(page_sys)
 
@@ -345,18 +351,18 @@ class AikaOptimizerPro(QMainWindow):
         page_automod = QWidget()
         layout_automod = QVBoxLayout(page_automod)
         layout_automod.setSpacing(15)
-        lbl_automod_t = QLabel("📦 AutoMod - Injetor de Modificações (Texturas/Effects)")
+        lbl_automod_t = QLabel("📦 AutoMod - Injetor de Modificações Nativas")
         lbl_automod_t.setStyleSheet("color: white; font-size: 20px; font-weight: bold; margin-bottom: 5px;")
         layout_automod.addWidget(lbl_automod_t)
 
-        desc_automod = QLabel("💡 <b>Como funciona:</b> Selecione TODOS os arquivos modificados de uma única vez. O sistema vasculha o jogo, audita o Hash SHA256, faz o backup dos originais e faz a substituição de forma automática.")
+        desc_automod = QLabel("💡 <b>Novo Indexador JSON:</b> A injeção agora varre a pasta do jogo instantaneamente usando indexação inteligente. Pode injetar texturas e áudios com o jogo aberto (Hot-Swapping) sem engasgar o PC!")
         desc_automod.setWordWrap(True)
         desc_automod.setStyleSheet("color: #A0A0B0; font-size: 13px; background-color: rgba(255,255,255,10); padding: 12px; border-radius: 8px;")
         layout_automod.addWidget(desc_automod)
 
         lay_status_mods = QHBoxLayout()
-        self.lbl_mods_selecionados = QLabel("Nenhum mod carregado para injeção.")
-        self.lbl_mods_selecionados.setStyleSheet("color: #888; font-size: 13px; font-family: Consolas; padding: 5px;")
+        self.lbl_mods_selecionados = QLabel("Nenhum arquivo de modificação carregado.")
+        self.lbl_mods_selecionados.setStyleSheet("color: #888; font-size: 13px; font-family: 'Consolas', monospace; padding: 5px;")
 
         self.btn_limpar_mods = QPushButton("🗑️ Limpar Seleção")
         self.btn_limpar_mods.setCursor(QCursor(Qt.PointingHandCursor))
@@ -371,21 +377,14 @@ class AikaOptimizerPro(QMainWindow):
         self.terminal_automod = QTextEdit()
         self.terminal_automod.setReadOnly(True)
         self.terminal_automod.setPlaceholderText("Lista de arquivos selecionados aparecerá aqui...")
-        self.terminal_automod.setStyleSheet("""
-            background-color: rgba(0, 0, 0, 80); 
-            border: 1px solid #3d0066; 
-            border-radius: 8px; 
-            color: #AAA; 
-            font-family: Consolas; 
-            font-size: 11px;
-        """)
-        self.terminal_automod.setFixedHeight(180)
+        self.terminal_automod.setStyleSheet("background-color: rgba(0, 0, 0, 80); border: 1px solid #3d0066; border-radius: 8px; color: #AAA; font-family: 'Consolas', monospace; font-size: 11px;")
+        self.terminal_automod.setFixedHeight(115)
         layout_automod.addWidget(self.terminal_automod)
 
         layout_automod.addWidget(self.criar_botao_ferramenta("📂 Selecionar Arquivos de Mod", self.selecionar_arquivos_mod))
 
         btn_inj_mod = QPushButton("⚙️ INJETAR MODS NO AIKA")
-        btn_inj_mod.setStyleSheet("background: #BF00FF; color: white; padding: 20px; border-radius: 12px; font-weight: bold; font-size: 16px;")
+        btn_inj_mod.setStyleSheet("background: #BF00FF; color: white; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px;")
         btn_inj_mod.setCursor(QCursor(Qt.PointingHandCursor))
         btn_inj_mod.clicked.connect(self.acao_injetar_mods)
 
@@ -400,7 +399,7 @@ class AikaOptimizerPro(QMainWindow):
         lbl_audio_t = QLabel("🎵 Injetor de Áudio Customizado")
         lbl_audio_t.setStyleSheet("color: white; font-size: 20px; font-weight: bold; margin-bottom: 5px;")
         layout_audio.addWidget(lbl_audio_t)
-        desc_audio = QLabel("💡 <b>Como funciona:</b> Escolha qualquer música (MP3 ou WAV) e o sistema injeta e aplica a música no jogo. O arquivo original fica salvo e auditado no nosso Snapshot de Backup.")
+        desc_audio = QLabel("💡 <b>Como funciona:</b> Escolha qualquer música (MP3 ou WAV) e o sistema converte e aplica no jogo. O arquivo original ficará preservado no nosso Snapshot de Segurança.")
         desc_audio.setWordWrap(True)
         desc_audio.setStyleSheet("color: #A0A0B0; font-size: 13px; background-color: rgba(255,255,255,10); padding: 12px; border-radius: 8px;")
         layout_audio.addWidget(desc_audio)
@@ -409,19 +408,24 @@ class AikaOptimizerPro(QMainWindow):
 
         self.lbl_alvo = QLabel("1. Arquivo Original do Jogo: Nenhum selecionado")
         self.lbl_alvo.setStyleSheet(self.estilo_default_lbl)
-        btn_alvo = self.criar_botao_ferramenta("📂 Buscar .bin na Pasta Sound do Jogo", self.selecionar_audio_jogo)
+        
+        lay_aud_jogo = QHBoxLayout()
+        btn_alvo = self.criar_botao_ferramenta("📂 Buscar .bin na Pasta Sound", self.selecionar_audio_jogo)
+        self.btn_play_jogo = self.criar_botao_ferramenta("▶️ Ouvir Original", self.tocar_audio_jogo)
+        lay_aud_jogo.addWidget(btn_alvo)
+        lay_aud_jogo.addWidget(self.btn_play_jogo)
 
         self.lbl_novo_audio = QLabel("2. Sua Nova Música/Efeito: Nenhum selecionado")
         self.lbl_novo_audio.setStyleSheet(self.estilo_default_lbl.replace("margin-top: 5px;", ""))
 
         lay_aud_btns = QHBoxLayout()
         btn_novo = self.criar_botao_ferramenta("🎵 Escolher Música (MP3/WAV)", self.selecionar_arquivo_audio)
-        self.btn_play = self.criar_botao_ferramenta("▶️ Ouvir Prévia", self.tocar_previa)
+        self.btn_play_novo = self.criar_botao_ferramenta("▶️ Ouvir Novo", self.tocar_previa)
         lay_aud_btns.addWidget(btn_novo)
-        lay_aud_btns.addWidget(self.btn_play)
+        lay_aud_btns.addWidget(self.btn_play_novo)
 
-        self.btn_conv_aud = QPushButton("🔄 ALTERAR ÁUDIO (APLICAR)")
-        self.btn_conv_aud.setStyleSheet("background: #BF00FF; color: white; padding: 20px; border-radius: 12px; font-weight: bold; font-size: 16px;")
+        self.btn_conv_aud = QPushButton("🔄 INJETAR NOVO ÁUDIO")
+        self.btn_conv_aud.setStyleSheet("background: #BF00FF; color: white; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px;")
         self.btn_conv_aud.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_conv_aud.clicked.connect(self.acao_substituir_audio)
 
@@ -431,7 +435,7 @@ class AikaOptimizerPro(QMainWindow):
         btn_restaurar_1.clicked.connect(self.acao_restaurar_audio)
 
         layout_audio.addWidget(self.lbl_alvo)
-        layout_audio.addWidget(btn_alvo)
+        layout_audio.addLayout(lay_aud_jogo)
         layout_audio.addWidget(self.lbl_novo_audio)
         layout_audio.addLayout(lay_aud_btns)
         layout_audio.addStretch()
@@ -439,7 +443,40 @@ class AikaOptimizerPro(QMainWindow):
         layout_audio.addWidget(btn_restaurar_1)
         self.telas.addWidget(page_audio)
 
-        # --- TELA 4: RESTAURAÇÃO E SEGURANÇA ---
+        # --- TELA 4: EXTRATOR JIT ---
+        page_jit = QWidget()
+        layout_jit = QVBoxLayout(page_jit)
+        layout_jit.setSpacing(15)
+        
+        lbl_jit_t = QLabel("🎨 Extrator de Texturas (.JIT para .DDS/.TGA)")
+        lbl_jit_t.setStyleSheet("color: white; font-size: 20px; font-weight: bold; margin-bottom: 5px;")
+        layout_jit.addWidget(lbl_jit_t)
+
+        desc_jit = QLabel("💡 <b>Motor Coringa Nativo:</b> Extrai texturas encriptadas. Se for TGA padrão, salva direto. Se for o misterioso JT20 (8-bits com paleta), converte para TGA 32-bits na mesma hora!")
+        desc_jit.setWordWrap(True)
+        desc_jit.setStyleSheet("color: #A0A0B0; font-size: 13px; background-color: rgba(255,255,255,10); padding: 12px; border-radius: 8px;")
+        layout_jit.addWidget(desc_jit)
+
+        self.lbl_jit_selecionado = QLabel("Nenhuma textura selecionada.")
+        self.lbl_jit_selecionado.setStyleSheet(self.estilo_default_lbl)
+        layout_jit.addWidget(self.lbl_jit_selecionado)
+
+        lay_btn_jit = QHBoxLayout()
+        lay_btn_jit.addWidget(self.criar_botao_ferramenta("📂 Buscar Texturas (.JIT)", self.selecionar_arquivos_jit))
+        lay_btn_jit.addWidget(self.criar_botao_ferramenta("📁 Abrir Pasta", self.abrir_pasta_textura_jit))
+        layout_jit.addLayout(lay_btn_jit)
+        
+        layout_jit.addStretch()
+
+        btn_extrair_jit = QPushButton("🎨 EXTRAIR TEXTURAS AGORA")
+        btn_extrair_jit.setStyleSheet("background: #6A0DAD; color: white; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px;")
+        btn_extrair_jit.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_extrair_jit.clicked.connect(self.acao_extrair_jit)
+        layout_jit.addWidget(btn_extrair_jit)
+
+        self.telas.addWidget(page_jit)
+
+        # --- TELA 5: RESTAURAÇÃO ---
         page_restore = QWidget()
         layout_restore = QVBoxLayout(page_restore)
         layout_restore.setSpacing(25)
@@ -448,18 +485,18 @@ class AikaOptimizerPro(QMainWindow):
         lbl_res_t.setStyleSheet("color: white; font-size: 20px; font-weight: bold; margin-bottom: 5px;")
         layout_restore.addWidget(lbl_res_t)
 
-        desc_res = QLabel("💡 <b>Auditoria Ativa (V2.0 Snapshot):</b> O Aika Optimizer salva o estado EXATO do seu Windows em um arquivo JSON antes de aplicar as otimizações. Além disso, criamos a pasta de Backups do jogo.<br><br>"
-                          "Aqui você pode desfazer qualquer modificação e reverter o seu computador ou os arquivos do jogo para o estado original.")
+        desc_res = QLabel("💡 <b>Auditoria Ativa:</b> O processo de restauração trabalha em lotes inteligentes para garantir que o seu disco rígido não congele.<br><br>"
+                          "Desfaça todas as modificações e reverta o sistema ou os arquivos do jogo para o estado original com total segurança.")
         desc_res.setWordWrap(True)
         desc_res.setStyleSheet("color: #A0A0B0; font-size: 14px; background-color: rgba(255,255,255,10); padding: 15px; border-radius: 8px; line-height: 1.5;")
         layout_restore.addWidget(desc_res)
 
-        btn_res_all = QPushButton("🎮 DESFAZER MODIFICAÇÕES NO JOGO (Arquivos .bin / Texturas)")
+        btn_res_all = QPushButton("🎮 DESFAZER MODIFICAÇÕES NO JOGO")
         btn_res_all.setStyleSheet("background: #FF1111; color: white; padding: 25px; border-radius: 15px; font-weight: bold; font-size: 16px; border: 2px solid #880000;")
         btn_res_all.setCursor(QCursor(Qt.PointingHandCursor))
         btn_res_all.clicked.connect(self.acao_restaurar_tudo)
 
-        btn_res_sys = QPushButton("🖥️ DESFAZER OTIMIZAÇÕES DE SISTEMA (Rollback JSON e Registro)")
+        btn_res_sys = QPushButton("🖥️ DESFAZER TWEAKS DE SISTEMA E BOOSTER")
         btn_res_sys.setStyleSheet("background: #FF8800; color: white; padding: 25px; border-radius: 15px; font-weight: bold; font-size: 16px; border: 2px solid #CC6600;")
         btn_res_sys.setCursor(QCursor(Qt.PointingHandCursor))
         btn_res_sys.clicked.connect(self.acao_restaurar_sistema)
@@ -475,9 +512,9 @@ class AikaOptimizerPro(QMainWindow):
         self.log_box = QTextEdit()
         self.log_box.setObjectName("AikaTerminal")
         self.log_box.setReadOnly(True)
-        self.log_box.setFixedHeight(160)
+        self.log_box.setFixedHeight(115)
 
-        self.log_box.setText(">> 🟢 SISTEMA AIKA 2.0 INICIALIZADO (MODO BLINDADO)...\n>> 🟢 ARQUIVO DE AUDITORIA .LOG ATIVADO.")
+        self.log_box.setText(">> 🟢 MOTOR DX9 E KERNEL BLINDADOS INICIALIZADOS...\n>> 🟢 PRONTO PARA ALTA PERFORMANCE NA JOY IMPACT ENGINE.")
         layout_direita.addWidget(self.log_box)
         layout_corpo.addLayout(layout_direita)
         layout_principal.addLayout(layout_corpo)
@@ -488,14 +525,30 @@ class AikaOptimizerPro(QMainWindow):
         self.player.setAudioOutput(self.audio_output)
         self.audio_output.setVolume(0.5)
         self.btn_aba_performance.setChecked(True)
-        monitor.iniciar_monitor("45.134.141.84", 8822, self.receber_dados_monitor)
 
     # ========================================================
-    # FUNÇÕES DE UI E CONTROLE
+    # FUNÇÕES DE UI E CONTROLE (TRAY ICON)
     # ========================================================
+    def minimizar_para_tray(self):
+        self.hide() # Apenas esconde a tela silenciosamente
+        
+    def clique_na_tray(self, reason):
+        # Se o usuário clicar (simples ou duplo) no ícone do relógio, volta a tela
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.showNormal()
+            self.activateWindow()
+
+    def alternar_maximizacao(self):
+        if self.isMaximized():
+            self.showNormal()
+            self.btn_max.setText("O") # Ícone Textual Seguro
+        else:
+            self.showMaximized()
+            self.btn_max.setText("O") # Ícone Textual Seguro
+
     def criar_botao_com_desc(self, t, a, d):
         lay = QVBoxLayout()
-        lay.setSpacing(5)
+        lay.setSpacing(2)
         btn = self.criar_botao_ferramenta(t, a)
         lay.addWidget(btn)
         lbl = QLabel(d)
@@ -541,29 +594,6 @@ class AikaOptimizerPro(QMainWindow):
         self.log_box.append(f">> {m}")
         self.log_box.verticalScrollBar().setValue(self.log_box.verticalScrollBar().maximum())
 
-    def atualizar_monitor(self, p, c, r, d):
-        self.lbl_ping.setText(f"Ping: {p}ms")
-        self.lbl_ping.setStyleSheet(f"color: {c}; font-family: Consolas; font-size: 14px; background: rgba(0,0,0,100); padding: 5px; border-radius: 5px;")
-        self.lbl_ram.setText(f"RAM: {r}%")
-        self.lbl_disco.setText(f"Disco: {d}%")
-        self.grafico_ping.atualizar(p)
-        if self.overlay_ativo:
-            self.overlay_window.atualizar(p, c)
-
-    def toggle_overlay(self):
-        self.overlay_ativo = not self.overlay_ativo
-        if self.overlay_ativo:
-            self.overlay_window.show()
-            self.btn_overlay.setStyleSheet("background-color: #BF00FF; color: white; border-radius: 5px; font-size: 11px; font-weight: bold; border: 1px solid white;")
-            self.sinais.log_signal.emit("🟢 OSD Overlay In-Game ATIVADO.")
-        else:
-            self.overlay_window.hide()
-            self.btn_overlay.setStyleSheet("background-color: rgba(77, 0, 128, 0.5); color: white; border-radius: 5px; font-size: 11px; font-weight: bold; border: 1px solid #BF00FF;")
-            self.sinais.log_signal.emit("🟡 OSD Overlay In-Game DESATIVADO.")
-
-    def receber_dados_monitor(self, p, c, r, d):
-        self.sinais.monitor_signal.emit(p if p else 999, c, r, d)
-
     def limpar_execucao(self):
         with self.tarefa_lock:
             self.executando_tarefa = False
@@ -579,59 +609,66 @@ class AikaOptimizerPro(QMainWindow):
             self.executando_tarefa = True
 
         self.worker = TarefaWorker(f)
+        self.worker.finished.connect(self.worker.deleteLater)
         self.worker.finished.connect(self.limpar_execucao)
         self.worker.start()
 
     # ========================================================
-    # AÇÕES DO SISTEMA E LOGS COM EMOJIS PADRONIZADOS
+    # AÇÕES DO SISTEMA E OTIMIZAÇÕES
     # ========================================================
     def iniciar_boost_seguro(self):
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle("Limpeza Opcional da Lixeira")
-        msg_box.setText("Deseja esvaziar a Lixeira do Windows durante a otimização?\n\nArquivos excluídos na lixeira não poderão ser recuperados.")
+        msg_box.setText("Deseja esvaziar a Lixeira do Windows durante a otimização?\n\nArquivos excluídos não poderão ser recuperados.")
         msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         msg_box.button(QMessageBox.Yes).setText("Sim, Limpar")
         msg_box.button(QMessageBox.No).setText("Não, Manter")
 
-        estilo_msgbox = """
-            QMessageBox { background-color: #0A0A0E; border: 2px solid #2A004D; }
-            QLabel { color: white; font-size: 14px; font-weight: bold; }
-            QPushButton { background-color: rgba(77, 0, 128, 0.3); border: 1px solid #4D0080; border-radius: 8px; color: white; font-weight: bold; padding: 8px 15px; font-size: 13px; min-width: 80px; }
-            QPushButton:hover { background-color: #BF00FF; border: 1px solid white; }
-        """
+        estilo_msgbox = "QMessageBox { background-color: #0A0A0E; border: 2px solid #2A004D; } QLabel { color: white; font-size: 14px; font-weight: bold; } QPushButton { background-color: rgba(77, 0, 128, 0.3); border: 1px solid #4D0080; border-radius: 8px; color: white; font-weight: bold; padding: 8px 15px; font-size: 13px; min-width: 80px; } QPushButton:hover { background-color: #BF00FF; border: 1px solid white; }"
         msg_box.setStyleSheet(estilo_msgbox)
-
         limpar_lix = (msg_box.exec() == QMessageBox.Yes)
 
         def tarefa_transacao():
-            self.sinais.log_signal.emit("🟢 Iniciando modo BLINDADO (Motor Transacional)...")
+            self.sinais.log_signal.emit("🟢 Iniciando Otimização Global DX9...")
             transacao = opt.TransacaoSistema()
-
             try:
                 transacao.executar(opt.salvar_snapshot_sistema)
-                self.sinais.log_signal.emit("🟢 Limpando arquivos temporários e cache...")
                 transacao.executar(opt.limpar_profundo, limpar_lix)
-                self.sinais.log_signal.emit("🟢 Aplicando otimizações de Desempenho e Rede...")
+                transacao.executar(opt.limpar_shader_cache)
                 transacao.executar(opt.modo_desempenho_maximo, rollback=opt.restaurar_snapshot_sistema)
-                transacao.executar(opt.otimizar_multimidia_jogos)
-                transacao.executar(opt.otimizar_resposta_teclado, rollback=opt.restaurar_registro_sistema)
+                transacao.executar(opt.desativar_mpo)
+                transacao.executar(opt.otimizar_multimidia_jogos) 
+                transacao.executar(opt.prioridade_total)         
                 transacao.executar(opt.otimizar_rede_estabilidade)
-                self.sinais.log_signal.emit("🟢 OTIMIZAÇÃO COMPLETA FINALIZADA COM SEGURANÇA MÁXIMA!")
-                opt.iniciar_jogo()
+                
+                self.sinais.log_signal.emit("🟢 Ativando Turbo Boost (Limpando RAM e Bloatwares)...")
+                p_mortos, r_otimizados, s_parados = opt.ativar_game_booster()
+                self.sinais.log_signal.emit(f"🟢 TURBO ON: {p_mortos} Processos mortos | {r_otimizados} Apps hibernados | {s_parados} Serviços parados.")
+
+                self.sinais.log_signal.emit("🟢 Gerando Índice I/O Inteligente do jogo para o AutoMod...")
+                transacao.executar(opt.criar_index_jogo)
+                
+                opt.otimizar_afinidade_aika()
+                
+                self.sinais.log_signal.emit("🟢 OTIMIZAÇÃO COMPLETA FINALIZADA COM SUCESSO!")
+                if not opt.jogo_esta_aberto():
+                    self.sinais.log_signal.emit("🟢 Iniciando o jogo agora...")
+                    opt.iniciar_jogo()
             except Exception as e:
                 self.sinais.log_signal.emit(f"🔴 ERRO CRÍTICO: {e}")
-                self.sinais.log_signal.emit("🟡 O sistema foi revertido automaticamente para proteção (Rollback ativado).")
+                self.sinais.log_signal.emit("🟡 Rollback ativado para segurança.")
 
         self.executar_em_background(tarefa_transacao)
 
+    # ========================================================
+    # EVENTOS DE MODDING, EXTRAÇÃO E ÁUDIO
+    # ========================================================
     def encontrar_pasta_sound(self):
         p = r"C:\CBMgames\AikaOnlineBrasil\Sound"
-        if os.path.exists(p):
-            return p
+        if os.path.exists(p): return p
         for d in string.ascii_uppercase:
             c = os.path.join(f"{d}:\\", "CBMgames", "AikaOnlineBrasil", "Sound")
-            if os.path.exists(c):
-                return c
+            if os.path.exists(c): return c
         return ""
 
     ESTILO_NEON_CARREGADO = "color: #00FF00; font-size: 13px; font-weight: bold; background-color: rgba(0, 50, 0, 150); border: 1px solid #00FF00; padding: 5px; border-radius: 5px;"
@@ -640,30 +677,34 @@ class AikaOptimizerPro(QMainWindow):
         f, _ = QFileDialog.getOpenFileName(self, "Selecionar Original", self.encontrar_pasta_sound(), "Aika (*.bin *.wav);;Tudo (*.*)")
         if f:
             self.arquivo_alvo_jogo = f
-            nome = f.split('/')[-1]
-            self.lbl_alvo.setText(f"1. Original: {nome}")
+            self.lbl_alvo.setText(f"1. Original: {f.split('/')[-1]}")
             self.lbl_alvo.setStyleSheet(self.ESTILO_NEON_CARREGADO + " margin-top: 5px;")
-            self.sinais.log_signal.emit(f"🟢 Original selecionado: {nome}")
+
+    def tocar_audio_jogo(self):
+        if not hasattr(self, 'arquivo_alvo_jogo'): return
+        if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState: self.player.stop()
+        caminho_wav = opt.preparar_previa_audio(self.arquivo_alvo_jogo)
+        if caminho_wav:
+            self.player.setSource(QUrl.fromLocalFile(caminho_wav))
+            self.player.play()
+            QTimer.singleShot(10000, opt.limpar_pasta_temp_audio)
 
     def selecionar_arquivo_audio(self):
         f, _ = QFileDialog.getOpenFileName(self, "Selecionar Novo", "", "Áudio (*.mp3 *.wav *.ogg *.m4a)")
         if f:
             self.arquivo_audio_selecionado = f
-            nome = f.split('/')[-1]
-            self.lbl_novo_audio.setText(f"2. Novo: {nome}")
+            self.lbl_novo_audio.setText(f"2. Novo: {f.split('/')[-1]}")
             self.lbl_novo_audio.setStyleSheet(self.ESTILO_NEON_CARREGADO)
-            self.sinais.log_signal.emit(f"🟢 Novo áudio carregado: {nome}")
 
     def tocar_previa(self):
-        if not hasattr(self, 'arquivo_audio_selecionado'):
-            return
+        if not hasattr(self, 'arquivo_audio_selecionado'): return
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.player.stop()
-            self.btn_play.setText("▶️ Ouvir Prévia")
+            self.btn_play_novo.setText("▶️ Ouvir Novo")
         else:
             self.player.setSource(QUrl.fromLocalFile(self.arquivo_audio_selecionado))
             self.player.play()
-            self.btn_play.setText("⏹️ Parar Prévia")
+            self.btn_play_novo.setText("⏹️ Parar Novo")
 
     def selecionar_arquivos_mod(self):
         f, _ = QFileDialog.getOpenFileNames(self, "Mods", "", "Tudo (*.*)")
@@ -673,119 +714,142 @@ class AikaOptimizerPro(QMainWindow):
             self.lbl_mods_selecionados.setStyleSheet("color: #00FF00; font-size: 13px; font-weight: bold; background-color: rgba(0, 50, 0, 150); border: 1px solid #00FF00; padding: 5px; border-radius: 5px;")
             self.btn_limpar_mods.show()
             self.terminal_automod.clear()
-            for caminho in f:
-                nome_arquivo = caminho.split('/')[-1]
-                self.terminal_automod.append(f"• {nome_arquivo}")
-            self.sinais.log_signal.emit(f"🟢 {len(f)} mods selecionados e auditados na lista.")
+            for caminho in f: self.terminal_automod.append(f"• {caminho.split('/')[-1]}")
 
     def limpar_selecao_mods(self):
         self.arquivos_mod_selecionados = []
-        self.lbl_mods_selecionados.setText("Nenhum mod carregado para injeção.")
-        self.lbl_mods_selecionados.setStyleSheet("color: #888; font-size: 13px; font-family: Consolas; padding: 5px;")
+        self.lbl_mods_selecionados.setText("Nenhum arquivo de modificação carregado.")
+        self.lbl_mods_selecionados.setStyleSheet("color: #888; font-size: 13px; font-family: 'Consolas', monospace; padding: 5px;")
         self.terminal_automod.clear()
         self.btn_limpar_mods.hide()
-        self.sinais.log_signal.emit("🟡 Seleção de mods limpa pelo usuário.")
 
     def acao_injetar_mods(self):
         mods = getattr(self, 'arquivos_mod_selecionados', None)
-        if not mods:
-            self.sinais.log_signal.emit("🔴 ERRO: Selecione os arquivos primeiro.")
-            return
+        if not mods: return
         def tarefa():
             r = opt.injetar_mods(mods)
-            if r == -2:
-                self.sinais.log_signal.emit("🔴 FECHE O JOGO PRIMEIRO! O Aika está bloqueando a modificação.")
-            elif r >= 0:
-                self.sinais.log_signal.emit(f"🟢 OK: {r} mods injetados com sucesso.")
-            else:
-                self.sinais.log_signal.emit("🔴 ERRO: Falha ao injetar mods.")
+            if r >= 0: self.sinais.log_signal.emit(f"🟢 OK: {r} mods injetados instantaneamente via JSON Index.")
+            else: self.sinais.log_signal.emit("🔴 ERRO: Falha ao injetar mods ou índice não foi gerado.")
+        self.executar_em_background(tarefa)
+
+    def selecionar_arquivos_jit(self):
+        pasta_base = r"C:\CBMgames\AikaOnlineBrasil" if os.path.exists(r"C:\CBMgames\AikaOnlineBrasil") else ""
+        f, _ = QFileDialog.getOpenFileNames(self, "Selecionar Texturas .JIT", pasta_base, "Aika Texture (*.jit)")
+        if f:
+            self.arquivos_jit_selecionados = f
+            self.lbl_jit_selecionado.setText(f"🎨 {len(f)} textura(s) selecionada(s).")
+            self.lbl_jit_selecionado.setStyleSheet(self.ESTILO_NEON_CARREGADO)
+
+    def abrir_pasta_textura_jit(self):
+        if hasattr(self, 'arquivos_jit_selecionados') and self.arquivos_jit_selecionados:
+            try: os.startfile(os.path.dirname(self.arquivos_jit_selecionados[0]))
+            except: pass
+
+    def acao_extrair_jit(self):
+        jits = getattr(self, 'arquivos_jit_selecionados', None)
+        if not jits: return
+        def tarefa():
+            self.sinais.log_signal.emit(f"🟡 Extraindo {len(jits)} textura(s)...")
+            sucesso_count = 0
+            for jit in jits:
+                ok, msg = opt.extrair_textura_jit(jit)
+                if ok: sucesso_count += 1
+                self.sinais.log_signal.emit(f"{'🟢' if ok else '🔴'} {os.path.basename(jit)}: {msg}")
+            self.sinais.log_signal.emit(f"✅ LOTE CONCLUÍDO: {sucesso_count}/{len(jits)} extraídos!")
         self.executar_em_background(tarefa)
 
     def acao_substituir_audio(self):
         alvo = getattr(self, 'arquivo_alvo_jogo', None)
         novo = getattr(self, 'arquivo_audio_selecionado', None)
-        if not alvo or not novo:
-            self.sinais.log_signal.emit("🔴 ERRO: Selecione o original e o novo primeiro.")
-            return
+        if not alvo or not novo: return
         def tarefa():
             s, m = opt.substituir_audio_customizado(novo, alvo)
-            self.sinais.log_signal.emit("🟢 Sucesso! Áudio injetado e backup gerado." if s else f"🔴 ERRO: {m}")
+            self.sinais.log_signal.emit("🟢 Sucesso! Áudio injetado." if s else f"🔴 ERRO: {m}")
         self.executar_em_background(tarefa)
 
     def acao_restaurar_audio(self):
         alvo = getattr(self, 'arquivo_alvo_jogo', None)
-        if not alvo:
-            self.sinais.log_signal.emit("🔴 ERRO: Selecione o arquivo .bin original primeiro para restaurar.")
-            return
+        if not alvo: return
         def tarefa():
             s, m = opt.restaurar_audio_original(alvo)
-            self.sinais.log_signal.emit(f"🟢 {m}" if s else f"🔴 ERRO: {m}")
+            self.sinais.log_signal.emit(f"🟢 {m}" if s else f"🔴 {m}")
         self.executar_em_background(tarefa)
 
     def acao_restaurar_tudo(self):
         def tarefa():
-            self.sinais.log_signal.emit("🟡 INICIANDO ROLLBACK DOS ARQUIVOS DO JOGO...")
+            self.sinais.log_signal.emit("🟡 INICIANDO RESTAURAÇÃO EM LOTES (Poupando HDD)...")
             s, m = opt.restaurar_tudo_jogo()
             self.sinais.log_signal.emit(f"🟢 {m}" if s else f"🔴 {m}")
         self.executar_em_background(tarefa)
 
     def acao_restaurar_sistema(self):
         def tarefa():
-            self.sinais.log_signal.emit("🟡 INICIANDO ROLLBACK DO REGISTRO E JSON...")
+            self.sinais.log_signal.emit("🟡 INICIANDO ROLLBACK DO SISTEMA...")
+            opt.desativar_game_booster() # Desliga o booster se estiver ativo
             s, m = opt.restaurar_registro_sistema()
             self.sinais.log_signal.emit(f"🟢 {m}" if s else f"🔴 {m}")
         self.executar_em_background(tarefa)
 
     def acao_dns(self, p):
         def tarefa():
-            if opt.alterar_dns(p):
-                self.sinais.log_signal.emit(f"🟢 DNS {p} aplicado (ignorando VPNs).")
+            if opt.alterar_dns(p): self.sinais.log_signal.emit(f"🟢 DNS {p} aplicado.")
         self.executar_em_background(tarefa)
 
-    def acao_prioridade(self):
+    def acao_afinidade(self):
         def tarefa():
-            if opt.prioridade_total():
-                self.sinais.log_signal.emit("🟢 Prioridade Máxima ativa no Registro e no Processo.")
+            if opt.otimizar_afinidade_aika(): self.sinais.log_signal.emit("🟢 Afinidade isolada com sucesso! Sem stutters.")
+            else: self.sinais.log_signal.emit("🟡 Jogo não encontrado ou não foi possível fixar afinidade.")
         self.executar_em_background(tarefa)
 
     def acao_gamebar(self):
         def tarefa():
-            if opt.desativar_game_bar():
-                self.sinais.log_signal.emit("🟢 Xbox Game Bar desativada no Registro.")
+            if opt.desativar_game_bar(): self.sinais.log_signal.emit("🟢 Game Bar desativada e Fullscreen Exclusivo forçado.")
         self.executar_em_background(tarefa)
 
     def acao_weapon(self):
         def tarefa():
-            r = opt.remover_weaponeff3()
-            if r == -2:
-                self.sinais.log_signal.emit("🔴 FECHE O JOGO PRIMEIRO! O Aika está aberto.")
+            status = opt.remover_efeitos_pesados_aika()
+            if status == 1: 
+                self.sinais.log_signal.emit("🟢 Mega-pack de Efeitos removido (Arquivos limpos com segurança)!")
+            elif status == 2: 
+                self.sinais.log_signal.emit("🟡 Os Efeitos já estão anulados (Arquivos já foram removidos).")
+            elif status == 0:
+                self.sinais.log_signal.emit("🟡 Arquivos não encontrados (Ou já foram removidos).")
             else:
-                self.sinais.log_signal.emit("🟢 Arquivo WeaponEff3 removido com backup!" if r else "🟡 Arquivo WeaponEff3 não encontrado ou já removido.")
+                self.sinais.log_signal.emit("🔴 Erro ao tentar processar os arquivos de efeitos.")
         self.executar_em_background(tarefa)
 
     def acao_tcp_nodelay(self):
         def tarefa():
-            self.sinais.log_signal.emit("🟢 Salvando registro anterior e Aplicando TCP NoDelay...")
             try:
-                if opt.otimizar_tcp_nodelay():
-                    self.sinais.log_signal.emit("🟢 Ping otimizado com sucesso!")
-                else:
-                    self.sinais.log_signal.emit("🔴 Erro ao otimizar TCP.")
-            except Exception as e:
-                self.sinais.log_signal.emit(f"🔴 Falha de permissão no TCP: {e}")
+                if opt.otimizar_tcp_nodelay(): self.sinais.log_signal.emit("🟢 Rotas TCP otimizadas com sucesso!")
+            except Exception as e: pass
         self.executar_em_background(tarefa)
 
     def fechar_app(self):
-        monitor.parar_monitor()
-        if self.overlay_window:
-            self.overlay_window.close()
+        if self.worker and self.worker.isRunning():
+            self.worker.cancel()
+            self.worker.quit()
+            if not self.worker.wait(2000): self.worker.terminate()
+        
+        try:
+            self.tray_icon.hide()
+        except Exception: pass
+        
+        opt.desativar_game_booster() # Segurança para não deixar serviços do Windows parados
+        opt.limpar_pasta_temp_audio()
+        opt.restaurar_timer_resolution()
         self.close()
 
+    # BLOQUEIA O ARRASTAR CASO A TELA ESTEJA MAXIMIZADA
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton: 
             self.dragPos = event.globalPosition().toPoint()
 
     def mouseMoveEvent(self, event):
+        if self.isMaximized():
+            return 
+            
         if event.buttons() == Qt.LeftButton and self.dragPos:
             delta = event.globalPosition().toPoint() - self.dragPos
             self.move(self.pos() + delta)
@@ -793,12 +857,17 @@ class AikaOptimizerPro(QMainWindow):
             event.accept()
 
 if __name__ == "__main__":
-    myappid = 'aika.optimizer.pro.2.0'
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    if not is_admin():
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-        sys.exit()
-    app = QApplication(sys.argv)
-    window = AikaOptimizerPro()
-    window.show()
-    sys.exit(app.exec())
+    try:
+        if not is_admin():
+            caminho_script = os.path.abspath(__file__)
+            diretorio_atual = os.path.dirname(caminho_script)
+            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, f'"{caminho_script}"', diretorio_atual, 1)
+            sys.exit()
+            
+        app = QApplication(sys.argv)
+        window = AikaOptimizerPro()
+        window.show()
+        sys.exit(app.exec())
+    except Exception as e:
+        erro_msg = f"ERRO CRÍTICO AO INICIAR O PROGRAMA:\n\n{traceback.format_exc()}"
+        ctypes.windll.user32.MessageBoxW(0, erro_msg, "Crash Report - Aika Optimizer", 0x10)
