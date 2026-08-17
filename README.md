@@ -1,3 +1,5 @@
+<img width="2048" height="768" alt="AIKA Optimizer V4.0" src="https://github.com/user-attachments/assets/b6ab88d4-ae43-4905-81f9-cfa6a6de5de0" />
+
 # AIKA Optimizer V4.0
 
 **Ferramenta de otimizacao, modding e extracao de assets para AIKA Online Brasil.**
