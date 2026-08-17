@@ -3,6 +3,7 @@ import time
 import threading
 import os
 import psutil
+from config import AIKA_GAME_EXES
 
 _monitor_lock = threading.Lock()
 _monitor_ativo = threading.Event()
@@ -25,7 +26,7 @@ def encontrar_ip_ativo_jogo():
     try:
         for proc in psutil.process_iter(['name', 'pid']):
             nome_proc = proc.info['name']
-            if nome_proc and nome_proc.lower() in ['aika.exe', 'aika_br.exe', 'gameengine.exe', 'aikabr.exe']:
+            if nome_proc and nome_proc.lower() in AIKA_GAME_EXES:
                 _pid_jogo_cache = proc.info['pid']
                 for conn in proc.connections(kind='tcp'):
                     if conn.status == 'ESTABLISHED' and conn.raddr:

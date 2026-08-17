@@ -1,4 +1,4 @@
-# OTIMIZADOR MODULAR V3.0 - A FACHADA (FACADE PATTERN)
+# OTIMIZADOR MODULAR V4.0 - A FACHADA (FACADE PATTERN)
 # Este arquivo importa todas as ferramentas dos módulos separados 
 # para que o main.py continue funcionando sem precisar alterar nenhuma linha!
 

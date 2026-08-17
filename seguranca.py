@@ -23,8 +23,11 @@ def fazer_backup_registro(chave_completa, nome_arquivo):
     try:
         os.makedirs(PASTA_BACKUP_REG, exist_ok=True)
         destino = os.path.join(PASTA_BACKUP_REG, f"{nome_arquivo}.reg")
-        if not os.path.exists(destino): executar_comando_seguro(['reg', 'export', chave_completa, destino, '/y'])
-    except Exception: pass
+        if not os.path.exists(destino):
+            if not executar_comando_seguro(['reg', 'export', chave_completa, destino, '/y']):
+                log(f"[SEGURANÇA] Falha ao exportar backup de Registro ({nome_arquivo}).")
+    except Exception as e:
+        log(f"[SEGURANÇA] Falha ao criar backup de Registro ({nome_arquivo}): {e}")
 
 class TransacaoSistema:
     def __init__(self):
@@ -46,7 +49,8 @@ class TransacaoSistema:
         log("[SEGURANÇA] Iniciando Rollback automático...")
         for acao, r_args in reversed(self.passos_executados):
             try: acao(*r_args)
-            except Exception: pass
+            except Exception as e:
+                log(f"[SEGURANÇA] Falha durante ação de rollback ({getattr(acao, '__name__', acao)}): {e}")
 
 def obter_plano_energia_atual():
     try:
@@ -74,14 +78,16 @@ def salvar_snapshot_sistema():
             temp_file = ARQUIVO_ESTADO + ".tmp"
             with open(temp_file, "w") as f: json.dump(estado, f, indent=4)
             os.replace(temp_file, ARQUIVO_ESTADO)
-        except Exception: pass
+        except Exception as e:
+            log(f"[SEGURANÇA] Falha ao salvar snapshot do sistema: {e}")
 
 def restaurar_snapshot_sistema():
     if not os.path.exists(ARQUIVO_ESTADO): return
     try:
         with open(ARQUIVO_ESTADO, "r") as f: estado = json.load(f)
         if estado.get("power_plan"):
-            executar_comando_seguro(['powercfg', '/setactive', estado.get("power_plan")])
+            if not executar_comando_seguro(['powercfg', '/setactive', estado.get("power_plan")]):
+                log("[SEGURANÇA] Falha ao restaurar plano de energia.")
         if estado.get("dns"):
             dns_validos = []
             for d in estado["dns"]:
@@ -89,10 +95,13 @@ def restaurar_snapshot_sistema():
                 except ValueError: pass
             if dns_validos:
                 dns_list = ",".join([f"'{d}'" for d in dns_validos])
-                executar_comando_seguro(['powershell', '-Command', f"Get-NetAdapter | Where-Object {{$_.Status -eq 'Up'}} | Set-DnsClientServerAddress -ServerAddresses ({dns_list})"])
+                if not executar_comando_seguro(['powershell', '-Command', f"Get-NetAdapter | Where-Object {{$_.Status -eq 'Up'}} | Set-DnsClientServerAddress -ServerAddresses ({dns_list})"]):
+                    log("[SEGURANÇA] Falha ao restaurar DNS do snapshot.")
         else:
-            executar_comando_seguro(['powershell', '-Command', "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Set-DnsClientServerAddress -ResetServerAddresses"])
-    except Exception: pass
+            if not executar_comando_seguro(['powershell', '-Command', "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Set-DnsClientServerAddress -ResetServerAddresses"]):
+                log("[SEGURANÇA] Falha ao restaurar DNS automático.")
+    except Exception as e:
+        log(f"[SEGURANÇA] Falha ao restaurar snapshot do sistema: {e}")
 
 def criar_ponto_restauracao():
     try:
@@ -115,7 +124,7 @@ def restaurar_tudo_jogo(pasta_jogo=PASTA_JOGO_PADRAO):
             for root, dirs, files in os.walk(PASTA_BACKUP):
                 if "Registro_Sistema" in root: continue
                 for file in files:
-                    if file in ["aika_optimizer.log", "ponto_restauracao_criado.txt", "estado_sistema.json", "estado_sistema.json.tmp", "aika_index.json"]: continue
+                    if file in ["aika_optimizer.log", "ponto_restauracao_criado.txt", "estado_sistema.json", "estado_sistema.json.tmp", "aika_index.json", "automod_history.json", "automod_history.json.tmp"]: continue
                     backup_files.append(os.path.join(root, file))
 
             BATCH_SIZE = 50
@@ -141,7 +150,8 @@ def restaurar_registro_sistema():
     with lock_otimizacao:
         try:
             restaurar_snapshot_sistema()
-            for exe in ["aika.exe", "aika_br.exe", "aikabr.exe", "GameEngine.exe", "gameengine.exe"]:
+            nomes_ifeo = set(AIKA_GAME_EXES) | set(AIKA_LAUNCHER_EXES) | {"GameEngine.exe"}
+            for exe in nomes_ifeo:
                 chave_ifeo = f"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\{exe}\\PerfOptions"
                 executar_comando_seguro(['reg', 'delete', chave_ifeo, '/f'])
             if not os.path.exists(PASTA_BACKUP_REG): return False, "Sem backup de registro."

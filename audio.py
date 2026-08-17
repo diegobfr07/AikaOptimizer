@@ -10,7 +10,9 @@ def substituir_audio_customizado(novo_audio, arquivo_alvo):
             if not os.path.exists(novo_audio) or not os.path.exists(arquivo_alvo): return False, "Arquivo não encontrado."
 
             caminho_backup = os.path.join(PASTA_BACKUP, os.path.relpath(arquivo_alvo, PASTA_JOGO_PADRAO))
-            if not os.path.exists(caminho_backup): fazer_backup_rapido(arquivo_alvo, caminho_backup)
+            if not os.path.exists(caminho_backup):
+                if not fazer_backup_rapido(arquivo_alvo, caminho_backup):
+                    return False, "Falha ao criar backup. Áudio não foi alterado."
 
             try: os.chmod(arquivo_alvo, stat.S_IWRITE); criar_substituto_old(arquivo_alvo)
             except Exception: pass

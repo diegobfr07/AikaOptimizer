@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#BF00FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Outer frame -->
+  <rect x="2" y="3" width="20" height="16" rx="2"/>
+  <!-- Mountains -->
+  <polyline points="2.5 16 7 8 10 13 13 6 17 11 21.5 16"/>
+  <!-- Sun -->
+  <circle cx="17" cy="7" r="2.5"/>
+  <!-- Sun rays -->
+  <line x1="17" y1="3.5" x2="17" y2="2"/>
+  <line x1="17" y1="10.5" x2="17" y2="12"/>
+  <line x1="13.5" y1="7" x2="12" y2="7"/>
+  <line x1="20.5" y1="7" x2="22" y2="7"/>
+</svg>

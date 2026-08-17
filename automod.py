@@ -1,4 +1,4 @@
-import os, json, shutil, stat
+import os, json, shutil, stat, time, threading
 from config import *
 from seguranca import fazer_backup_rapido, criar_substituto_old
 
@@ -43,10 +43,20 @@ def injetar_mods(lista_arquivos_mods, pasta_jogo=PASTA_JOGO_PADRAO):
                             break
                 
                 if not destino or not caminho_seguro(pasta_jogo, destino): continue
+
+                # Bloqueia raw copy de formato incompatível (exceto .dds, que tem pipeline próprio)
+                ext_destino = os.path.splitext(destino)[1].lower()
+                if ext_mod != '.dds' and ext_mod != ext_destino:
+                    log(f"[AUTOMOD] Formato incompatível: arquivo {os.path.basename(mod_caminho)} não pode substituir destino {os.path.basename(destino)}.")
+                    continue
                 
                 caminho_backup = os.path.join(PASTA_BACKUP, os.path.relpath(destino, PASTA_JOGO_PADRAO))
-                if not os.path.exists(caminho_backup): fazer_backup_rapido(destino, caminho_backup)
+                if not os.path.exists(caminho_backup):
+                    if not fazer_backup_rapido(destino, caminho_backup):
+                        log(f"[ERRO] Backup de {os.path.basename(destino)} falhou. Mod não aplicado.")
+                        continue
 
+                antes = arquivos_substituidos
                 try:
                     # SALVA O MODO ORIGINAL
                     modo_original = os.stat(destino).st_mode
@@ -114,7 +124,11 @@ def injetar_mods(lista_arquivos_mods, pasta_jogo=PASTA_JOGO_PADRAO):
                         # MÁGICA FINAL: Este código roda SEMPRE, aconteça o que acontecer, garantindo a proteção do arquivo!
                         os.chmod(destino, modo_original)
                         
-                except Exception as e: pass
+                except Exception as e:
+                    log(f"[AUTOMOD] Erro ao injetar {os.path.basename(destino)}: {e}")
+
+                if arquivos_substituidos > antes:
+                    registrar_mod_ativo(destino, mod_caminho, pasta_jogo)
             return arquivos_substituidos
         except Exception: return -1
 
@@ -154,3 +168,148 @@ def remover_efeitos_pesados_aika(pasta_jogo=PASTA_JOGO_PADRAO):
                 
                 return 0
         except Exception: return -1
+
+# ========================================================
+# HISTÓRICO DE MODIFICAÇÕES ATIVAS (AUTOMOD)
+# ========================================================
+_historico_lock = threading.Lock()
+
+def _chave_destino(destino, pasta_jogo=PASTA_JOGO_PADRAO):
+    """Chave única normalizada (relpath lowercase com separadores '/')."""
+    try:
+        rel = os.path.relpath(destino, pasta_jogo)
+    except Exception:
+        rel = destino
+    return rel.replace("\\", "/").lower()
+
+def carregar_historico_automod():
+    """Retorna {'version':1,'items':{}} — vazio se ausente/corrompido."""
+    vazio = {"version": 1, "items": {}}
+    if not os.path.exists(ARQUIVO_HISTORICO_AUTOMOD):
+        return vazio
+    try:
+        with open(ARQUIVO_HISTORICO_AUTOMOD, "r", encoding="utf-8") as f:
+            dados = json.load(f)
+        if not isinstance(dados, dict):
+            return vazio
+        dados.setdefault("version", 1)
+        dados.setdefault("items", {})
+        return dados
+    except Exception as e:
+        log(f"[AUTOMOD] Histórico ilegível (estado seguro): {e}")
+        return vazio
+
+def salvar_historico_automod(dados):
+    """Escrita atômica (tmp -> os.replace)."""
+    try:
+        os.makedirs(PASTA_BACKUP, exist_ok=True)
+        tmp = ARQUIVO_HISTORICO_AUTOMOD + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(dados, f, indent=2)
+        os.replace(tmp, ARQUIVO_HISTORICO_AUTOMOD)
+        return True
+    except Exception as e:
+        log(f"[AUTOMOD] Erro ao salvar histórico: {e}")
+        return False
+
+def listar_mods_ativos():
+    """Retorna lista de itens ativos, cada um com a chave ('chave')."""
+    dados = carregar_historico_automod()
+    itens = []
+    for chave, item in dados.get("items", {}).items():
+        copia = dict(item)
+        copia["chave"] = chave
+        itens.append(copia)
+    return itens
+
+def registrar_mod_ativo(destino, mod_caminho, pasta_jogo=PASTA_JOGO_PADRAO):
+    """Registra/atualiza UMA entrada ativa por destino (não duplica)."""
+    with _historico_lock:
+        dados = carregar_historico_automod()
+        chave = _chave_destino(destino, pasta_jogo)
+        rel = os.path.relpath(destino, pasta_jogo).replace("\\", "/")
+        item = dados["items"].get(chave)
+        if item is None:
+            item = {}
+            dados["items"][chave] = item
+        item["target_relpath"] = rel
+        item["target_name"] = os.path.basename(destino)
+        item["mod_name"] = os.path.basename(mod_caminho)
+        item["backup_relpath"] = rel
+        item["last_applied"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        item["injection_count"] = item.get("injection_count", 0) + 1
+        salvar_historico_automod(dados)
+
+def restaurar_mod_individual(chave_mod, pasta_jogo=PASTA_JOGO_PADRAO):
+    """Restaura UM arquivo do histórico. Retorna (True, msg) / (False, msg)."""
+    with lock_otimizacao:
+        with _historico_lock:
+            dados = carregar_historico_automod()
+            item = dados.get("items", {}).get(chave_mod)
+            if item is None:
+                return False, "Item não encontrado no histórico."
+
+            target_rel = item.get("target_relpath") or item.get("backup_relpath")
+            if not target_rel:
+                return False, "Caminho relativo ausente no histórico."
+
+            destino = os.path.join(pasta_jogo, target_rel.replace("/", os.sep))
+            caminho_backup = os.path.join(PASTA_BACKUP, target_rel.replace("/", os.sep))
+            nome = item.get("target_name") or os.path.basename(destino)
+
+            if not caminho_seguro(pasta_jogo, destino):
+                return False, "Destino fora da pasta do jogo (bloqueado)."
+            if not os.path.exists(caminho_backup):
+                return False, "Backup original não encontrado."
+
+            tmp_destino = destino + ".restaurando.tmp"
+            try:
+                os.makedirs(os.path.dirname(destino), exist_ok=True)
+                shutil.copyfile(caminho_backup, tmp_destino)
+                try:
+                    shutil.copymode(caminho_backup, tmp_destino)
+                except Exception:
+                    pass
+                if os.path.exists(destino):
+                    try:
+                        os.chmod(destino, stat.S_IWRITE)
+                    except Exception:
+                        pass
+                os.replace(tmp_destino, destino)
+            except Exception as e:
+                if os.path.exists(tmp_destino):
+                    try:
+                        os.remove(tmp_destino)
+                    except Exception:
+                        pass
+                return False, f"Não foi possível restaurar {nome}: {e}"
+
+            del dados["items"][chave_mod]
+            salvar_historico_automod(dados)
+            return True, f"{nome} restaurado para o original."
+
+def limpar_historico_automod():
+    """Limpa o histórico (usado após restauração total)."""
+    with _historico_lock:
+        return salvar_historico_automod({"version": 1, "items": {}})
+
+def restaurar_mods_selecionados(chaves, pasta_jogo=PASTA_JOGO_PADRAO):
+    """Restaura vários mods em sequência, reutilizando restaurar_mod_individual.
+
+    Retorna {'restaurados': [nomes...], 'falhas': [(nome, motivo), ...]}.
+    Falhas parciais não desfazem os sucessos.
+    """
+    restaurados = []
+    falhas = []
+    for chave in chaves:
+        dados = carregar_historico_automod()
+        item = dados.get("items", {}).get(chave)
+        nome = (item or {}).get("target_name") or chave
+        ok, msg = restaurar_mod_individual(chave, pasta_jogo)
+        if ok:
+            restaurados.append(nome)
+        else:
+            prefixo = f"Não foi possível restaurar {nome}: "
+            motivo = msg[len(prefixo):] if msg.startswith(prefixo) else msg
+            falhas.append((nome, motivo))
+    return {"restaurados": restaurados, "falhas": falhas}

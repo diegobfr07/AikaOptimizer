@@ -55,31 +55,55 @@ def otimizar_multimidia_jogos():
         return True
     except Exception: return False
 
+def aplicar_afinidade_sem_cpu0(proc):
+    """Remove somente a CPU lógica 0 da afinidade atual do processo, preservando as demais CPUs.
+
+    Retorna True se a afinidade foi alterada; False se já otimizado, sem acesso ou sem CPUs disponíveis.
+    """
+    try:
+        afinidade_atual = proc.cpu_affinity()
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return False
+    except Exception:
+        return False
+
+    if not afinidade_atual:
+        return False
+
+    if 0 not in afinidade_atual:
+        # CPU 0 já não faz parte da afinidade → já otimizado
+        return False
+
+    nova_afinidade = [cpu for cpu in afinidade_atual if cpu != 0]
+    if not nova_afinidade:
+        return False
+
+    try:
+        proc.cpu_affinity(nova_afinidade)
+        return True
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return False
+    except Exception:
+        return False
+
+
 def otimizar_afinidade_aika():
-    lista_exes = ["aika.exe", "aika_br.exe", "gameengine.exe", "aikabr.exe", "aikalauncher.exe"]
-    sucesso = False
+    """Aplica afinidade (remove somente CPU 0) a TODOS os processos reais do jogo."""
+    processados = 0
     try:
         for proc in psutil.process_iter(['name', 'pid']):
-            nome = proc.info['name']
-            if nome and nome.lower() in lista_exes:
-                pid = proc.info['pid']
-                cpu_count = psutil.cpu_count(logical=False) or psutil.cpu_count()
-                
-                if cpu_count >= 4: alvo, mask = list(range(1, cpu_count)), (1 << cpu_count) - 2
-                elif cpu_count >= 2: alvo, mask = [1], 2
-                else: alvo, mask = [0], 1
-                
-                try:
-                    p = psutil.Process(pid)
-                    p.cpu_affinity(alvo)
-                    sucesso = True
-                    log(f"[CPU] Processo {nome} isolado nos núcleos: {alvo}")
-                except Exception:
-                    try:
-                        cmd = ['powershell', '-Command', f"(Get-Process -Id {pid}).ProcessorAffinity = {mask}"]
-                        if executar_comando_seguro(cmd):
-                            sucesso = True
-                            log(f"[CPU] Processo {nome} isolado via PowerShell.")
-                    except Exception: pass
-    except Exception: pass
-    return sucesso
+            nome = (proc.info.get('name') or "").lower()
+            if nome not in AIKA_GAME_EXES:
+                continue
+            pid = proc.info['pid']
+            try:
+                if aplicar_afinidade_sem_cpu0(proc):
+                    processados += 1
+                    log(f"[CPU] CPU 0 removida do processo {nome} (PID {pid}).")
+                else:
+                    log(f"[CPU] {nome} (PID {pid}) já otimizado ou sem acesso.")
+            except Exception as e:
+                log(f"[CPU] Erro ao processar {nome} (PID {pid}): {e}")
+    except Exception as e:
+        log(f"[CPU] Erro na enumeração: {e}")
+    return processados > 0
