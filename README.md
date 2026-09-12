@@ -1,6 +1,8 @@
 # AIKA Optimizer V4.1.0
 
 **Ferramenta de otimizacao, modding e extracao de assets para AIKA Online Brasil.**
+<img width="1672" height="941" alt="aika-optimizer-v4 1 0-preview" src="https://github.com/user-attachments/assets/fff40254-39a1-4d06-b9b5-e0e49bf4fa1d" />
+
 
 Desenvolvido em Python com interface PySide6, arquitetura modular e integracao com o Windows. Otimizacao por sessao, AutoMod com backup, extracao de texturas .JIT, organizador de sets, renderizador dgVoodoo2, Cores das Pedras e Central de Ajuda.
 
