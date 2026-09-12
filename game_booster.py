@@ -1,4 +1,4 @@
-import os, subprocess, psutil, ctypes, time
+import os, subprocess, psutil, ctypes, time, math
 from config import log, lock_otimizacao, is_modo_agressivo, AIKA_GAME_EXES, AIKA_LAUNCHER_EXES
 from enum import Enum
 
@@ -80,13 +80,24 @@ PROCESSOS_OPTIONAL_BG = {
     # Launchers secundários
     "epicgameslauncher.exe", "epicwebhelper.exe", "origin.exe", 
     "originwebhelperservice.exe", "eadesktop.exe", "ubisoftconnect.exe", 
-    "upc.exe", "uplay.exe", "battle.net.exe", "agent.exe",
+    "upc.exe", "uplay.exe", "battle.net.exe",
+    # (removido "agent.exe": nome generico; sem identidade segura nao encerra)
     "riotclientservices.exe", "riotclientux.exe", "goggalaxy.exe", "leagueclient.exe",
     # Atualizadores
     "googleupdate.exe", "googlecrashhandler.exe", "msedgeupdate.exe",
     "adobearm.exe", "adobeupdateservice.exe", "acrotray.exe",
     # Comunicação (não encerrar automaticamente)
     # "discord.exe", "teams.exe", "skype.exe" -> NÃO estão aqui, são protegidos
+    # Torrents legítimos (modo normal preserva; agressivo pode encerrar)
+    "utorrent.exe", "bittorrent.exe", "qbittorrent.exe",
+    # Download managers legítimos
+    "idm.exe", "idman.exe",
+    # Limpadores/otimizadores legítimos (não são adware por natureza)
+    "ccleaner.exe", "ccleaner64.exe", "ccupdate.exe",
+    "advancedsystemcare.exe", "driverbooster.exe",
+    "wisecare365.exe", "glaryutilities.exe",
+    # Componentes legítimos de fundo (Google/Adobe) e comunicação
+    "software_reporter_tool.exe", "ccxprocess.exe", "qq.exe",
 }
 
 # ========================================================
@@ -94,28 +105,15 @@ PROCESSOS_OPTIONAL_BG = {
 # Softwares bundled/adware/PUP documentados
 # ========================================================
 PROCESSOS_KNOWN_UNWANTED = {
-    # PUPs e Adware conhecidos
-    "bytefence.exe", "bytefenceservice.exe", 
+    # PUPs e Adware conhecidos (claramente indesejados por natureza)
+    "bytefence.exe", "bytefenceservice.exe",
     "webcompanion.exe", "webcompanionhelper.exe", "webcompanionupdater.exe",
     "lavasoft.wca.exe", "lavasoft.webcompanion.exe",
-    # Toolbars e softwares duvidosos
-    "software_reporter_tool.exe",
-    # Otimizadores duvidosos
-    "ccleaner.exe", "ccleaner64.exe", "ccupdate.exe",
-    "advancedsystemcare.exe", "driverbooster.exe",
-    "wisecare365.exe", "glaryutilities.exe",
-    # Softwares chineses com histórico questionável
-    "baidu.exe", "baiduan.exe", "hao123.exe", "360safe.exe", "qq.exe",
-    # Softwares bancários que consomem recursos
-    "warsaw.exe", "gastecnologia.exe", "diebold.exe",
-    # Torrents
-    "utorrent.exe", "bittorrent.exe", "qbittorrent.exe",
-    # Download managers
-    "idm.exe", "idman.exe",
-    # Atualizadores agressivos
-    "autoupdater.exe",
-    # Adobe background
-    "ccxprocess.exe",
+    # Browser hijackers / PUP de navegador
+    "baidu.exe", "baiduan.exe", "hao123.exe",
+    # Observacoes: torrents, download managers, limpadores, driverbooster,
+    # software_reporter_tool (Google), ccxprocess (Adobe) e qq.exe sao
+    # aplicativos legitimos -> movidos para PROCESSOS_OPTIONAL_BG.
 }
 
 # ========================================================
@@ -176,6 +174,29 @@ PROCESSOS_PROTEGIDOS = {
 
 # Reforço: proteção explícita dos executáveis do Aika (defense in depth)
 PROCESSOS_PROTEGIDOS |= AIKA_GAME_EXES | AIKA_LAUNCHER_EXES
+PROCESSOS_PROTEGIDOS |= {"warsaw.exe", "gbpsv.exe", "core.exe", "g-buster browser defense.exe", "gas tecnologia.exe", "gastecnologia.exe", "diebold.exe"}
+
+# ========================================================
+# SOFTWARES REAIS DE SEGURANCA (NUNCA ENCERRAR PELO AIKA OPTIMIZER)
+# O 360 Total Security e equivalentes nao podem ser derrubados pelo booster:
+# ferias disso desabilitaria a defesa do usuario durante a sessao (CRITICO).
+# ========================================================
+PROCESSOS_SEGURANCA_PROTEGIDOS = {
+    "360safe.exe",   # 360 Total Security (protecao principal)
+    "360se.exe",     # navegador/componente 360
+    "360tray.exe",
+    "360sd.exe",
+    "360svc.exe",
+}
+PROCESSOS_PROTEGIDOS |= PROCESSOS_SEGURANCA_PROTEGIDOS
+
+# ========================================================
+# NOMES GENERICOS SEM IDENTIDADE SEGURA
+# Nomes demasiado genericos jamais podem ser encerrados apenas porque
+# coincidem com uma entrada da kill-list. Se nao houver como provar que
+# pertencem ao software alvo, o processo e tratado como UNKNOWN (nao encerra).
+# ========================================================
+NOMES_GENERICOS_INSECUROS = frozenset({"agent.exe", "autoupdater.exe"})
 
 # ========================================================
 # ARMADURA DO KERNEL (NUNCA TOCAR NESTES PROCESSOS)
@@ -313,39 +334,22 @@ def matar_processo_e_filhos(p):
         for p_alive in alive:
             try: p_alive.kill()
             except (psutil.NoSuchProcess, psutil.AccessDenied): pass
+
+        # So conta como encerrado se o processo-alvo de fato morreu.
+        # AccessDenied/falha/processo ainda vivo NAO infla a metrica.
+        try:
+            if psutil.pid_exists(p.pid) and psutil.Process(p.pid).is_running():
+                return False
+        except psutil.NoSuchProcess:
+            return True
+        except Exception:
+            return False
         return True
     except (psutil.NoSuchProcess, psutil.AccessDenied): 
         return False
     except Exception as e: 
         log(f"Erro inesperado ao matar arvore de processos: {e}")
         return False
-
-def finalizar_bloatwares(pid_focado):
-    encerrados = 0
-    for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
-        try:
-            pid = proc.info['pid']
-            nome = (proc.info['name'] or "").lower()
-            
-            if pid == MEU_PID or pid == pid_focado or nome in PROCESSOS_PROTEGIDOS:
-                continue
-
-            # Escudo de Segurança: Pula processos vitais do Windows
-            if nome in PROCESSOS_CRITICOS:
-                continue
-
-            if nome in PROCESSOS_MATAR:
-                mem_mb = proc.info['memory_info'].rss / (1024 * 1024) if proc.info['memory_info'] else 0
-                
-                if mem_mb > 50 or "update" in nome or "utorrent" in nome or "ccleaner" in nome:
-                    if matar_processo_e_filhos(proc):
-                        encerrados += 1
-                        
-        except (psutil.NoSuchProcess, psutil.AccessDenied): pass
-        except Exception as e: 
-            log(f"Falha inesperada ao finalizar {proc.info.get('name', 'PID ' + str(pid))}: {e}")
-            
-    return encerrados
 
 def obter_startupinfo_invisivel():
     si = None
@@ -587,28 +591,68 @@ def _obter_processo_pai(proc):
 def coletar_metricas():
     """
     Coleta métricas reais: CPU %, RAM disponível/usada, total de processos.
-    Retorna dict com dados para exibição no log.
+    Cada grupo é independente: falha em CPU não invalida RAM (e vice-versa).
+    Valores indisponíveis são None; nunca são substituídos por zero sintético.
     """
+    metricas = {
+        "cpu_percent": None,
+        "ram_total_gb": None,
+        "ram_usada_gb": None,
+        "ram_disponivel_gb": None,
+        "ram_percent": None,
+        "total_procs": None,
+        "telemetry_errors": [],
+    }
+
     try:
         cpu_percent = psutil.cpu_percent(interval=0.5)
+        if not isinstance(cpu_percent, (int, float)) or not math.isfinite(cpu_percent):
+            raise ValueError("leitura de CPU não finita")
+        metricas["cpu_percent"] = cpu_percent
+    except Exception as e:
+        metricas["telemetry_errors"].append("CPU")
+        log(f"[TELEMETRIA][AVISO] CPU indisponível: {e}")
+
+    try:
         mem = psutil.virtual_memory()
         ram_total_gb = mem.total / (1024 ** 3)
         ram_usada_gb = mem.used / (1024 ** 3)
         ram_disponivel_gb = mem.available / (1024 ** 3)
         ram_percent = mem.percent
-        total_procs = len(list(psutil.process_iter()))
-        return {
-            "cpu_percent": cpu_percent,
+        valores_ram = (ram_total_gb, ram_usada_gb, ram_disponivel_gb, ram_percent)
+        if not all(isinstance(valor, (int, float)) and math.isfinite(valor)
+                   for valor in valores_ram):
+            raise ValueError("leitura de RAM não finita")
+        metricas.update({
             "ram_total_gb": round(ram_total_gb, 1),
             "ram_usada_gb": round(ram_usada_gb, 1),
             "ram_disponivel_gb": round(ram_disponivel_gb, 1),
             "ram_percent": ram_percent,
-            "total_procs": total_procs,
-        }
+        })
     except Exception as e:
-        log(f"Erro ao coletar métricas: {e}")
-        return {"cpu_percent": 0, "ram_total_gb": 0, "ram_usada_gb": 0,
-                "ram_disponivel_gb": 0, "ram_percent": 0, "total_procs": 0}
+        metricas["telemetry_errors"].append("RAM")
+        log(f"[TELEMETRIA][AVISO] RAM indisponível: {e}")
+
+    try:
+        metricas["total_procs"] = len(list(psutil.process_iter()))
+    except Exception as e:
+        metricas["telemetry_errors"].append("PROCESSOS")
+        log(f"[TELEMETRIA][AVISO] Contagem de processos indisponível: {e}")
+
+    return metricas
+
+
+def _texto_metrica(valor, sufixo=""):
+    if isinstance(valor, (int, float)) and math.isfinite(valor):
+        return f"{valor}{sufixo}"
+    return "indisponível"
+
+
+def _delta_metrica(antes, depois):
+    if (isinstance(antes, (int, float)) and math.isfinite(antes)
+            and isinstance(depois, (int, float)) and math.isfinite(depois)):
+        return round(antes - depois, 1)
+    return None
 
 def classificar_processo(proc):
     """
@@ -766,168 +810,394 @@ def _validar_navegador_para_encerramento(proc, nome):
 
 
 def encerrar_navegadores_agressivos(pid_focado, dry_run, resultado):
-    """Encerra famílias de navegadores inteiras (somente Modo Agressivo).
-
-    Retorna o conjunto de PIDs tratados (para o loop genérico pular).
-    """
+    """Encerra navegadores no modo agressivo e só contabiliza PIDs realmente finalizados."""
     if not is_modo_agressivo():
         return set()
-
     navegadores = {}
-    for proc in psutil.process_iter(['pid', 'name', 'memory_info', 'exe']):
+    for proc in psutil.process_iter(['pid','name','memory_info','exe']):
         try:
-            pid = proc.info['pid']
-            nome = (proc.info.get('name') or "").lower().strip()
-            if pid == MEU_PID or pid == pid_focado:
-                continue
-            if nome in PROCESSOS_PROTEGIDOS or nome in PROCESSOS_CRITICOS:
-                continue
-            caminho = _obter_caminho_exe(proc)
-            if not _eh_navegador(nome, caminho):
-                continue
-            seguro, _motivo = _validar_navegador_para_encerramento(proc, nome)
-            if not seguro:
-                continue
-            navegadores.setdefault(nome, []).append((pid, proc, nome))
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
-        except Exception as e:
-            log(f"[GAME SESSION] Erro ao varrer navegador: {e}")
-
-    pids_tratados = set()
-    for nome, lista in navegadores.items():
-        procs = [p for (_, p, _) in lista]
-        log(f"[GAME SESSION] Browser detectado: {nome} — {len(procs)} processos")
-
+            pid=proc.info['pid']; nome=(proc.info.get('name') or '').lower().strip()
+            if pid in (MEU_PID,pid_focado) or nome in PROCESSOS_PROTEGIDOS or nome in PROCESSOS_CRITICOS: continue
+            caminho=_obter_caminho_exe(proc)
+            if not _eh_navegador(nome,caminho): continue
+            seguro,_=_validar_navegador_para_encerramento(proc,nome)
+            if seguro: navegadores.setdefault(nome,[]).append((pid,proc,nome))
+        except (psutil.NoSuchProcess,psutil.AccessDenied): pass
+        except Exception as e: log(f"[GAME SESSION] Erro ao varrer navegador: {e}")
+    tratados=set()
+    for nome,lista in navegadores.items():
+        procs=[p for _,p,_ in lista]
+        mem_antes={}
+        for pid,p,n in lista:
+            try: mem_antes[pid]=(p.info.get('memory_info').rss/(1024*1024)) if p.info.get('memory_info') else 0
+            except Exception: mem_antes[pid]=0
         if dry_run:
-            for (pid, p, n) in lista:
-                mem_mb = 0
-                try:
-                    if p.info.get('memory_info'):
-                        mem_mb = p.info['memory_info'].rss / (1024 * 1024)
-                except Exception:
-                    pass
-                resultado["detalhes_encerramentos"].append({
-                    "pid": pid, "nome": n, "categoria": "OPTIONAL_BACKGROUND",
-                    "mem_mb": round(mem_mb, 1), "encerrado": False, "motivo": "DRY_RUN"
-                })
+            for pid,p,n in lista:
+                resultado['detalhes_encerramentos'].append({'pid':pid,'nome':n,'categoria':'OPTIONAL_BACKGROUND','mem_mb':round(mem_antes[pid],1),'encerrado':False,'motivo':'DRY_RUN'})
             continue
-
-        mem_antes = {}
-        for (pid, p, n) in lista:
-            try:
-                if p.info.get('memory_info'):
-                    mem_antes[pid] = p.info['memory_info'].rss / (1024 * 1024)
-            except Exception:
-                pass
-
-        log(f"[GAME SESSION] Encerrando família do navegador: {nome}")
-        for (pid, p, n) in lista:
-            pids_tratados.add(pid)
-            try:
-                p.terminate()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-
-        try:
-            _, alive = psutil.wait_procs(procs, timeout=3)
-        except Exception:
-            alive = procs
+        for pid,p,n in lista:
+            tratados.add(pid)
+            try: p.terminate()
+            except (psutil.NoSuchProcess,psutil.AccessDenied): pass
+        try: _,alive=psutil.wait_procs(procs,timeout=3)
+        except Exception: alive=procs
         for p in alive:
+            try: p.kill()
+            except (psutil.NoSuchProcess,psutil.AccessDenied): pass
+        try: _,alive_final=psutil.wait_procs(procs,timeout=1)
+        except Exception: alive_final=alive
+        vivos={getattr(p,'pid',None) for p in alive_final}
+        encerrados=0
+        for pid,p,n in lista:
+            morto = pid not in vivos and not psutil.pid_exists(pid)
+            if morto:
+                encerrados += 1; resultado['processos_encerrados'] += 1; resultado['mem_associada_mb'] += mem_antes.get(pid,0)
+            resultado['detalhes_encerramentos'].append({'pid':pid,'nome':n,'categoria':'OPTIONAL_BACKGROUND','mem_mb':round(mem_antes.get(pid,0),1),'encerrado':bool(morto),'motivo':'' if morto else 'Processo permaneceu ativo/AccessDenied'})
+        log(f"[GAME SESSION] Browser {nome} encerrado: {encerrados}/{len(lista)} processos")
+    return tratados
+
+def prioridade_e_high(valor):
+    """Compara a representação do psutil/Windows com HIGH_PRIORITY_CLASS."""
+    if not hasattr(psutil, "HIGH_PRIORITY_CLASS"):
+        return False
+    try:
+        return int(valor) == int(psutil.HIGH_PRIORITY_CLASS)
+    except (TypeError, ValueError):
+        return valor == psutil.HIGH_PRIORITY_CLASS
+
+
+def nome_prioridade_windows(valor):
+    """Nome legível da prioridade observada, sem inferir estado ausente."""
+    if valor is None:
+        return "indisponível"
+    classes = (
+        ("IDLE", "IDLE_PRIORITY_CLASS"),
+        ("BELOW_NORMAL", "BELOW_NORMAL_PRIORITY_CLASS"),
+        ("NORMAL", "NORMAL_PRIORITY_CLASS"),
+        ("ABOVE_NORMAL", "ABOVE_NORMAL_PRIORITY_CLASS"),
+        ("HIGH", "HIGH_PRIORITY_CLASS"),
+    )
+    for nome, atributo in classes:
+        if hasattr(psutil, atributo):
             try:
-                p.kill()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
+                if int(valor) == int(getattr(psutil, atributo)):
+                    return nome
+            except (TypeError, ValueError):
+                if valor == getattr(psutil, atributo):
+                    return nome
+    return str(valor)
 
-        # Reverificação curta (segunda passagem): browser recriou processos?
-        recriados = 0
-        for proc2 in psutil.process_iter(['pid', 'name']):
+
+def _pid_ainda_existe(pid):
+    try:
+        return bool(psutil.pid_exists(pid))
+    except Exception:
+        return None
+
+
+def avaliar_prioridade_processo_aika(proc, nome=None, aplicar=True):
+    """Lê, opcionalmente aplica HIGH e confirma o estado por releitura."""
+    pid = getattr(proc, "pid", "?")
+    if nome is None:
+        try:
+            nome = (getattr(proc, "info", {}).get("name") or proc.name() or "").lower()
+        except Exception:
+            nome = "aika.exe"
+    detalhe = {
+        "pid": pid,
+        "name": nome,
+        "before": None,
+        "before_name": "indisponível",
+        "requested": "HIGH_PRIORITY",
+        "after": None,
+        "after_name": "indisponível",
+        "result": None,
+        "operation": "READ_PRIORITY",
+        "error_type": None,
+        "error_message": None,
+        "pid_exists_after": None,
+    }
+
+    try:
+        antes = proc.nice()
+        detalhe["before"] = antes
+        detalhe["before_name"] = nome_prioridade_windows(antes)
+    except psutil.NoSuchProcess as e:
+        detalhe.update(result="disappeared", error_type=type(e).__name__,
+                       error_message=str(e), pid_exists_after=False)
+        return detalhe
+    except Exception as e:
+        detalhe.update(result="failed", error_type=type(e).__name__,
+                       error_message=str(e), pid_exists_after=_pid_ainda_existe(pid))
+        return detalhe
+
+    if prioridade_e_high(antes):
+        detalhe.update(result="already_high", operation="NONE", after=antes,
+                       after_name=nome_prioridade_windows(antes),
+                       pid_exists_after=True)
+        return detalhe
+    if not aplicar:
+        detalhe.update(result="not_high", operation="READ_PRIORITY", after=antes,
+                       after_name=nome_prioridade_windows(antes),
+                       pid_exists_after=True)
+        return detalhe
+
+    detalhe["operation"] = "SET_HIGH_PRIORITY"
+    try:
+        if hasattr(psutil, "HIGH_PRIORITY_CLASS"):
+            proc.nice(psutil.HIGH_PRIORITY_CLASS)
+        else:
+            PROCESS_HIGH_PRIORITY_CLASS = 0x00000080
+            handle = ctypes.windll.kernel32.OpenProcess(0x0200, False, pid)
+            if not handle:
+                raise OSError("não foi possível abrir o processo")
             try:
-                nome2 = (proc2.info.get('name') or "").lower().strip()
-                pid2 = proc2.info['pid']
-                if nome2 == nome and pid2 not in pids_tratados:
-                    recriados += 1
-                    pids_tratados.add(pid2)
-                    try:
-                        proc2.terminate()
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
-            except Exception:
-                pass
-        if recriados > 0:
-            log(f"[GAME SESSION] Browser {nome}: {recriados} processo(s) recriado(s); segunda passagem.")
+                if not ctypes.windll.kernel32.SetPriorityClass(
+                        handle, PROCESS_HIGH_PRIORITY_CLASS):
+                    raise OSError("SetPriorityClass retornou falha")
+            finally:
+                ctypes.windll.kernel32.CloseHandle(handle)
+    except psutil.NoSuchProcess as e:
+        detalhe.update(result="disappeared", error_type=type(e).__name__,
+                       error_message=str(e), pid_exists_after=False)
+        return detalhe
+    except Exception as e:
+        detalhe.update(result="failed", error_type=type(e).__name__,
+                       error_message=str(e), pid_exists_after=_pid_ainda_existe(pid))
+        try:
+            depois = proc.nice()
+            detalhe["after"] = depois
+            detalhe["after_name"] = nome_prioridade_windows(depois)
+        except Exception:
+            pass
+        return detalhe
 
-        log(f"[GAME SESSION] Browser {nome} encerrado: {len(lista)}/{len(lista)} processos")
+    detalhe["operation"] = "VERIFY_HIGH_PRIORITY"
+    try:
+        depois = proc.nice()
+        detalhe["after"] = depois
+        detalhe["after_name"] = nome_prioridade_windows(depois)
+        detalhe["pid_exists_after"] = True
+    except psutil.NoSuchProcess as e:
+        detalhe.update(result="disappeared", error_type=type(e).__name__,
+                       error_message=str(e), pid_exists_after=False)
+        return detalhe
+    except Exception as e:
+        detalhe.update(result="failed", error_type=type(e).__name__,
+                       error_message=f"releitura após setter: {e}",
+                       pid_exists_after=_pid_ainda_existe(pid))
+        return detalhe
 
-        for (pid, p, n) in lista:
-            resultado["processos_encerrados"] += 1
-            resultado["mem_associada_mb"] += mem_antes.get(pid, 0)
-            resultado["detalhes_encerramentos"].append({
-                "pid": pid, "nome": n, "categoria": "OPTIONAL_BACKGROUND",
-                "mem_mb": round(mem_antes.get(pid, 0), 1), "encerrado": True
-            })
+    if prioridade_e_high(depois):
+        detalhe["result"] = "changed"
+    else:
+        detalhe.update(result="failed", error_type="PriorityVerificationError",
+                       error_message="releitura não confirmou HIGH_PRIORITY")
+    return detalhe
 
-    return pids_tratados
+
+def _log_detalhe_prioridade(detalhe):
+    prefixo = f"[AIKA PRIORITY] {detalhe['name']} (PID {detalhe['pid']})"
+    if detalhe["result"] == "already_high":
+        log(f"{prefixo}: já estava em HIGH_PRIORITY")
+    elif detalhe["result"] == "changed":
+        log(f"{prefixo}: {detalhe['before_name']} -> HIGH_PRIORITY confirmado")
+    elif detalhe["result"] == "disappeared":
+        log(f"{prefixo}: processo desapareceu durante a análise")
+    elif detalhe["result"] == "failed":
+        log(
+            f"{prefixo}: falha ao aplicar HIGH_PRIORITY | "
+            f"etapa={detalhe['operation']} | antes={detalhe['before_name']} | "
+            f"erro={detalhe['error_type']}: "
+            f"{detalhe['error_message'] or 'sem mensagem'} | "
+            f"pid_ativo={detalhe['pid_exists_after']} | depois={detalhe['after_name']}"
+        )
+
+
+def aplicar_high_priority_aika_detalhado(incluir_detalhes=False):
+    """Aplica apenas HIGH; detalhes por PID são opcionais por compatibilidade."""
+    relatorio = {
+        "detected": 0, "already_high": 0, "changed": 0,
+        "failed": 0, "disappeared": 0, "details": [],
+    }
+    try:
+        for proc in psutil.process_iter(['pid', 'name']):
+            pid = getattr(proc, "pid", "?")
+            try:
+                nome = (proc.info.get('name') or "").lower()
+                if nome not in AIKA_GAME_EXES:
+                    continue
+                pid = proc.info['pid']
+                relatorio["detected"] += 1
+                caminho = _obter_caminho_exe(proc)
+                if caminho and ("\\windows\\system32\\" in caminho.lower()
+                                and "aika" not in caminho.lower()
+                                and "cbmgames" not in caminho.lower()):
+                    detalhe = {
+                        "pid": pid, "name": nome, "before": None,
+                        "before_name": "indisponível", "requested": "HIGH_PRIORITY",
+                        "after": None, "after_name": "indisponível",
+                        "result": "failed", "operation": "VALIDATE_PROCESS",
+                        "error_type": "InvalidProcessPath",
+                        "error_message": "executável não parece ser um AIKA genuíno",
+                        "pid_exists_after": _pid_ainda_existe(pid),
+                    }
+                else:
+                    detalhe = avaliar_prioridade_processo_aika(proc, nome, aplicar=True)
+                relatorio["details"].append(detalhe)
+                resultado = detalhe["result"]
+                if resultado in ("already_high", "changed", "failed", "disappeared"):
+                    relatorio[resultado] += 1
+                _log_detalhe_prioridade(detalhe)
+            except psutil.NoSuchProcess as e:
+                detalhe = {
+                    "pid": pid, "name": "aika.exe", "before": None,
+                    "before_name": "indisponível", "requested": "HIGH_PRIORITY",
+                    "after": None, "after_name": "indisponível",
+                    "result": "disappeared", "operation": "READ_PROCESS",
+                    "error_type": type(e).__name__,
+                    "error_message": str(e), "pid_exists_after": False,
+                }
+                relatorio["disappeared"] += 1
+                relatorio["details"].append(detalhe)
+                _log_detalhe_prioridade(detalhe)
+            except Exception as e:
+                detalhe = {
+                    "pid": pid, "name": "aika.exe", "before": None,
+                    "before_name": "indisponível", "requested": "HIGH_PRIORITY",
+                    "after": None, "after_name": "indisponível",
+                    "result": "failed", "operation": "READ_PROCESS",
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "pid_exists_after": _pid_ainda_existe(pid),
+                }
+                relatorio["failed"] += 1
+                relatorio["details"].append(detalhe)
+                _log_detalhe_prioridade(detalhe)
+    except Exception as e:
+        relatorio["failed"] += 1
+        log(f"[AIKA PRIORITY] Erro na enumeração: {type(e).__name__}: {e}")
+    if not incluir_detalhes:
+        relatorio.pop("details", None)
+    return relatorio
 
 
 def aplicar_high_priority_aika():
+    """Compatibilidade: retorna somente quantas prioridades foram alteradas."""
+    return aplicar_high_priority_aika_detalhado()["changed"]
+
+
+def _quer_encerrar(categoria, modo_agressivo, nome=None):
+    """Decide se uma categoria permite encerramento automatico.
+
+    - PROTECTED / GAME / UNKNOWN: nunca encerrar.
+    - KNOWN_UNWANTED: encerra, exceto nomes genericos sem identidade segura.
+    - OPTIONAL_BACKGROUND: somente em modo agressivo.
+    Nomes genericos (NOMES_GENERICOS_INSECUROS) nunca sao encerrados apenas
+    pelo nome, mesmo que estejam em uma kill-list. Nome ausente/desconhecido
+    tambem bloqueia: sem identidade, nao ha como provar o alvo.
     """
-    Localiza Aika.exe e aplica HIGH_PRIORITY_CLASS.
-    NUNCA usa REALTIME_PRIORITY_CLASS.
-    Valida PID, caminho e estado atual.
-    """
-    aplicado = 0
+    if not nome or nome in NOMES_GENERICOS_INSECUROS:
+        return False
+    if categoria in (CategoriaProcesso.PROTECTED, CategoriaProcesso.GAME,
+                     CategoriaProcesso.UNKNOWN):
+        return False
+    if categoria == CategoriaProcesso.KNOWN_UNWANTED:
+        return True
+    if categoria == CategoriaProcesso.OPTIONAL_BACKGROUND:
+        return bool(modo_agressivo)
+    return False
 
-    try:
-        for proc in psutil.process_iter(['pid', 'name']):
-            nome = (proc.info.get('name') or "").lower()
-            if nome not in AIKA_GAME_EXES:
-                continue
 
-            pid = proc.info['pid']
-            try:
-                caminho = _obter_caminho_exe(proc)
-                if caminho:
-                    caminho_l = caminho.lower()
-                    if ("\\windows\\system32\\" in caminho_l) and ("aika" not in caminho_l and "cbmgames" not in caminho_l):
-                        log(f"[ALERTA] PID {pid} ({nome}) em {caminho} — não parece ser Aika genuíno")
-                        continue
-                else:
-                    log(f"[AIKA PRIORITY] PID {pid} ({nome}): caminho inacessível — tratando como jogo (conservador)")
+def _novo_resultado_sessao(dry_run=False, status="completed"):
+    """Cria um resultado independente para cada acionamento do booster."""
+    return {
+        "status": status,
+        "dry_run": dry_run,
+        "metricas_antes": {},
+        "metricas_depois": {},
+        "processos_encerrados": 0,
+        "mem_associada_mb": 0,
+        "processos_avaliados": 0,
+        "categorias_encontradas": {cat.value: 0 for cat in CategoriaProcesso},
+        "detalhes_encerramentos": [],
+        "aika_priority_applied": 0,
+        "aika_priority_report": {
+            "detected": 0,
+            "already_high": 0,
+            "changed": 0,
+            "failed": 0,
+            "disappeared": 0,
+            "details": [],
+        },
+        "ram_trimmed": 0,
+        "servicos_parados": 0,
+    }
 
-                try:
-                    nice_atual = proc.nice()
-                except Exception:
-                    nice_atual = "desconhecido"
 
-                log(f"[AIKA PRIORITY] {nome} (PID {pid}): atual={nice_atual}, aplicando HIGH")
+def _log_metricas_snapshot(rotulo, metricas):
+    log(
+        f"[GAME SESSION] Métricas {rotulo}: "
+        f"CPU {_texto_metrica(metricas.get('cpu_percent'), '%')} | "
+        f"RAM {_texto_metrica(metricas.get('ram_usada_gb'), 'GB')}/"
+        f"{_texto_metrica(metricas.get('ram_total_gb'), 'GB')} "
+        f"({_texto_metrica(metricas.get('ram_percent'), '%')}) | "
+        f"{_texto_metrica(metricas.get('total_procs'))} processos"
+    )
 
-                if hasattr(psutil, "HIGH_PRIORITY_CLASS"):
-                    proc.nice(psutil.HIGH_PRIORITY_CLASS)
-                    aplicado += 1
-                    log(f"[AIKA PRIORITY] {nome} (PID {pid}): HIGH aplicado com sucesso")
-                else:
-                    PROCESS_HIGH_PRIORITY_CLASS = 0x00000080
-                    handle = ctypes.windll.kernel32.OpenProcess(0x0200, False, pid)
-                    if handle:
-                        try:
-                            ctypes.windll.kernel32.SetPriorityClass(handle, PROCESS_HIGH_PRIORITY_CLASS)
-                            aplicado += 1
-                            log(f"[AIKA PRIORITY] {nome} (PID {pid}): HIGH via API nativa")
-                        finally:
-                            ctypes.windll.kernel32.CloseHandle(handle)
 
-            except psutil.NoSuchProcess:
-                log(f"[AIKA PRIORITY] PID {pid} já não existe")
-            except psutil.AccessDenied:
-                log(f"[AIKA PRIORITY] Acesso negado ao PID {pid}")
-            except Exception as e:
-                log(f"[AIKA PRIORITY] Erro no PID {pid}: {e}")
+def _log_resultado_telemetria(resultado, prefixo=""):
+    antes = resultado["metricas_antes"]
+    depois = resultado["metricas_depois"]
+    delta_cpu = _delta_metrica(
+        antes.get("cpu_percent"), depois.get("cpu_percent")
+    )
+    delta_ram = _delta_metrica(
+        antes.get("ram_percent"), depois.get("ram_percent")
+    )
+    log(f"[GAME SESSION] {prefixo}RESULTADO FINAL:")
+    log(f"  {resultado['processos_encerrados']} processos encerrados | "
+        f"{resultado['mem_associada_mb']:.0f} MB associados")
+    log(
+        f"  CPU antes: {_texto_metrica(antes.get('cpu_percent'), '%')} | "
+        f"depois: {_texto_metrica(depois.get('cpu_percent'), '%')} | "
+        f"Delta: {_texto_metrica(delta_cpu, '%')}"
+    )
+    log(
+        f"  RAM antes: {_texto_metrica(antes.get('ram_percent'), '%')} | "
+        f"depois: {_texto_metrica(depois.get('ram_percent'), '%')} | "
+        f"Delta: {_texto_metrica(delta_ram, '%')}"
+    )
+    log(
+        f"  Processos antes: {_texto_metrica(antes.get('total_procs'))} | "
+        f"depois: {_texto_metrica(depois.get('total_procs'))}"
+    )
+    prioridade = resultado["aika_priority_report"]
+    log(
+        f"  AIKA: {prioridade['detected']} detectados | "
+        f"{prioridade['already_high']} já HIGH | "
+        f"{prioridade['changed']} alterados | "
+        f"{prioridade['failed']} falhas | "
+        f"{prioridade['disappeared']} desapareceram"
+    )
 
-    except Exception as e:
-        log(f"[AIKA PRIORITY] Erro na enumeração: {e}")
 
-    return aplicado
+def _reavaliar_booster_ativo(dry_run=False):
+    """Gera nova telemetria sem repetir as fases destrutivas do booster."""
+    resultado = _novo_resultado_sessao(dry_run, status="already_active")
+    resultado["message"] = "Booster já estava ativo; telemetria renovada"
+    resultado["metricas_antes"] = coletar_metricas()
+    _log_metricas_snapshot("ANTES (REENTRADA)", resultado["metricas_antes"])
+    if not dry_run:
+        prioridade = aplicar_high_priority_aika_detalhado(incluir_detalhes=True)
+        resultado["aika_priority_report"] = prioridade
+        resultado["aika_priority_applied"] = prioridade["changed"]
+    time.sleep(0.5)
+    resultado["metricas_depois"] = coletar_metricas()
+    _log_metricas_snapshot("DEPOIS (REENTRADA)", resultado["metricas_depois"])
+    _log_resultado_telemetria(resultado)
+    return resultado
+
 
 def game_session_optimizer(dry_run=False):
     """
@@ -943,33 +1213,18 @@ def game_session_optimizer(dry_run=False):
 
     with lock_otimizacao:
         if BOOSTER_ATIVO:
-            return {"status": "already_active", "message": "Booster já está ativo"}
+            return _reavaliar_booster_ativo(dry_run)
 
         DRY_RUN = dry_run
         BOOSTER_ATIVO = True
 
-        resultado = {
-            "status": "completed",
-            "dry_run": dry_run,
-            "metricas_antes": {},
-            "metricas_depois": {},
-            "processos_encerrados": 0,
-            "mem_associada_mb": 0,
-            "processos_avaliados": 0,
-            "categorias_encontradas": {cat.value: 0 for cat in CategoriaProcesso},
-            "detalhes_encerramentos": [],
-            "aika_priority_applied": 0,
-            "ram_trimmed": 0,
-            "servicos_parados": 0,
-        }
+        resultado = _novo_resultado_sessao(dry_run)
         try:
             # FASE 0: Coletar métricas antes
             resultado["metricas_antes"] = coletar_metricas()
             antes = resultado["metricas_antes"]
             prefixo = "[DRY RUN] " if dry_run else ""
-            log(f"[GAME SESSION] Métricas ANTES: CPU {antes['cpu_percent']}% | "
-                f"RAM {antes['ram_usada_gb']}/{antes['ram_total_gb']}GB "
-                f"({antes['ram_percent']}%) | {antes['total_procs']} processos")
+            _log_metricas_snapshot("ANTES", antes)
 
             pid_focado = obter_pid_janela_focada()
 
@@ -995,12 +1250,11 @@ def game_session_optimizer(dry_run=False):
                     resultado["processos_avaliados"] += 1
 
                     # Decisão de encerramento
-                    deve_encerrar = False
-                    if categoria == CategoriaProcesso.KNOWN_UNWANTED:
-                        deve_encerrar = True
-                    elif categoria == CategoriaProcesso.OPTIONAL_BACKGROUND:
-                        if is_modo_agressivo():
-                            deve_encerrar = True
+                    deve_encerrar = _quer_encerrar(
+                        categoria,
+                        is_modo_agressivo(),
+                        nome,
+                    )
 
                     if not deve_encerrar:
                         continue
@@ -1066,7 +1320,9 @@ def game_session_optimizer(dry_run=False):
             # FASE 5: HIGH PRIORITY para Aika.exe
             log(f"[GAME SESSION] {prefixo}Aplicando HIGH PRIORITY ao Aika.exe...")
             if not dry_run:
-                resultado["aika_priority_applied"] = aplicar_high_priority_aika()
+                prioridade = aplicar_high_priority_aika_detalhado(incluir_detalhes=True)
+                resultado["aika_priority_report"] = prioridade
+                resultado["aika_priority_applied"] = prioridade["changed"]
             else:
                 log("[DRY RUN] Aika.exe receberia HIGH_PRIORITY_CLASS se em execução")
 
@@ -1076,19 +1332,7 @@ def game_session_optimizer(dry_run=False):
             depois = resultado["metricas_depois"]
 
             # Log final com métricas reais
-            delta_cpu = round(antes['cpu_percent'] - depois['cpu_percent'], 1)
-            delta_ram = round(antes['ram_percent'] - depois['ram_percent'], 1)
-
-            log(f"[GAME SESSION] {prefixo}RESULTADO FINAL:")
-            log(f"  {resultado['processos_encerrados']} processos encerrados | "
-                f"{resultado['mem_associada_mb']:.0f} MB associados")
-            log(f"  CPU antes: {antes['cpu_percent']}% | depois: {depois['cpu_percent']}% "
-                f"| Delta: {delta_cpu}%")
-            log(f"  RAM antes: {antes['ram_percent']}% ({antes['ram_usada_gb']}GB) | "
-                f"depois: {depois['ram_percent']}% ({depois['ram_usada_gb']}GB) | "
-                f"Delta: {delta_ram}%")
-            log(f"  Processos antes: {antes['total_procs']} | depois: {depois['total_procs']}")
-            log(f"  Aika HIGH_PRIORITY: {resultado['aika_priority_applied']} processos")
+            _log_resultado_telemetria(resultado, prefixo)
             log(f"  Distribuição: {resultado['categorias_encontradas']}")
 
             return resultado

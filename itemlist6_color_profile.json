@@ -1,0 +1,2656 @@
+{
+  "schema": "itemlist6-color-profile-v2",
+  "layout": {
+    "header_size": 12,
+    "record_size": 464,
+    "color_field_offset": 427,
+    "trailer_size": 4
+  },
+  "sources": {
+    "official_sha256": "FB81552A75FCFDA181F8BEC9428F9FE5C3DF6C58AB426AC41EEBACD45CDC33EF",
+    "white_baseline_sha256": "9E0DEF7CACF20EF407B25166E5E088B677ACBBCD9522B7299786EFB3FDBB33D8"
+  },
+  "distribution": {
+    "4": 92,
+    "5": 136,
+    "6": 60,
+    "7": 90,
+    "8": 30,
+    "9": 30
+  },
+  "group_counts": {
+    "attack": 60,
+    "defense": 60,
+    "common": 318
+  },
+  "records": [
+    {
+      "record_id": 20209,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 54
+    },
+    {
+      "record_id": 20210,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 14
+    },
+    {
+      "record_id": 20211,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 77
+    },
+    {
+      "record_id": 20212,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 29
+    },
+    {
+      "record_id": 20213,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 99
+    },
+    {
+      "record_id": 20214,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 71
+    },
+    {
+      "record_id": 20215,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 44
+    },
+    {
+      "record_id": 20216,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 9
+    },
+    {
+      "record_id": 20217,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 160
+    },
+    {
+      "record_id": 20218,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 131
+    },
+    {
+      "record_id": 20219,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 83
+    },
+    {
+      "record_id": 20220,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 143
+    },
+    {
+      "record_id": 20221,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 95
+    },
+    {
+      "record_id": 20222,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 199
+    },
+    {
+      "record_id": 20223,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 165
+    },
+    {
+      "record_id": 20224,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 112
+    },
+    {
+      "record_id": 20225,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 69
+    },
+    {
+      "record_id": 20226,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 40
+    },
+    {
+      "record_id": 20227,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 214
+    },
+    {
+      "record_id": 20228,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 182
+    },
+    {
+      "record_id": 20229,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 237
+    },
+    {
+      "record_id": 20230,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 125
+    },
+    {
+      "record_id": 20231,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 82
+    },
+    {
+      "record_id": 20232,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 1
+    },
+    {
+      "record_id": 20233,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 31
+    },
+    {
+      "record_id": 20234,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 170
+    },
+    {
+      "record_id": 20235,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 191
+    },
+    {
+      "record_id": 20236,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 61
+    },
+    {
+      "record_id": 20237,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 22
+    },
+    {
+      "record_id": 20238,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 207
+    },
+    {
+      "record_id": 20239,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 166
+    },
+    {
+      "record_id": 20240,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 102
+    },
+    {
+      "record_id": 20241,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 59
+    },
+    {
+      "record_id": 20242,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 111
+    },
+    {
+      "record_id": 20243,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 63
+    },
+    {
+      "record_id": 20244,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 170
+    },
+    {
+      "record_id": 20245,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 124
+    },
+    {
+      "record_id": 20246,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 137
+    },
+    {
+      "record_id": 20247,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 88
+    },
+    {
+      "record_id": 20248,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 228
+    },
+    {
+      "record_id": 20249,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 179
+    },
+    {
+      "record_id": 20250,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 239
+    },
+    {
+      "record_id": 20251,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 149
+    },
+    {
+      "record_id": 20252,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 103
+    },
+    {
+      "record_id": 20253,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 109
+    },
+    {
+      "record_id": 20254,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 219
+    },
+    {
+      "record_id": 20255,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 151
+    },
+    {
+      "record_id": 20256,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 207
+    },
+    {
+      "record_id": 20257,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 159
+    },
+    {
+      "record_id": 20258,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 21
+    },
+    {
+      "record_id": 20259,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 221
+    },
+    {
+      "record_id": 20260,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 166
+    },
+    {
+      "record_id": 20261,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 126
+    },
+    {
+      "record_id": 20262,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 189
+    },
+    {
+      "record_id": 20263,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 141
+    },
+    {
+      "record_id": 20264,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 211
+    },
+    {
+      "record_id": 20265,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 183
+    },
+    {
+      "record_id": 20266,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 156
+    },
+    {
+      "record_id": 20267,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 121
+    },
+    {
+      "record_id": 20268,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 16
+    },
+    {
+      "record_id": 20269,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 243
+    },
+    {
+      "record_id": 20270,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 195
+    },
+    {
+      "record_id": 20271,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 255
+    },
+    {
+      "record_id": 20272,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 207
+    },
+    {
+      "record_id": 20273,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 55
+    },
+    {
+      "record_id": 20274,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 21
+    },
+    {
+      "record_id": 20275,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 224
+    },
+    {
+      "record_id": 20276,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 181
+    },
+    {
+      "record_id": 20277,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 152
+    },
+    {
+      "record_id": 20278,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 70
+    },
+    {
+      "record_id": 20279,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 38
+    },
+    {
+      "record_id": 20280,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 93
+    },
+    {
+      "record_id": 20281,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 237
+    },
+    {
+      "record_id": 20282,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 194
+    },
+    {
+      "record_id": 20283,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 113
+    },
+    {
+      "record_id": 20284,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 143
+    },
+    {
+      "record_id": 20285,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 26
+    },
+    {
+      "record_id": 20286,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 47
+    },
+    {
+      "record_id": 20287,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 173
+    },
+    {
+      "record_id": 20288,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 134
+    },
+    {
+      "record_id": 20289,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 63
+    },
+    {
+      "record_id": 20290,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 22
+    },
+    {
+      "record_id": 20291,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 214
+    },
+    {
+      "record_id": 20292,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 171
+    },
+    {
+      "record_id": 20293,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 223
+    },
+    {
+      "record_id": 20294,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 175
+    },
+    {
+      "record_id": 20295,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 26
+    },
+    {
+      "record_id": 20296,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 236
+    },
+    {
+      "record_id": 20297,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 249
+    },
+    {
+      "record_id": 20298,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 200
+    },
+    {
+      "record_id": 20299,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 85
+    },
+    {
+      "record_id": 20300,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 36
+    },
+    {
+      "record_id": 20301,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 96
+    },
+    {
+      "record_id": 20302,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 6
+    },
+    {
+      "record_id": 20303,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 216
+    },
+    {
+      "record_id": 20304,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 222
+    },
+    {
+      "record_id": 20305,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 76
+    },
+    {
+      "record_id": 20306,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 8
+    },
+    {
+      "record_id": 20307,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 64
+    },
+    {
+      "record_id": 20308,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 16
+    },
+    {
+      "record_id": 20309,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 134
+    },
+    {
+      "record_id": 20310,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 78
+    },
+    {
+      "record_id": 20311,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 23
+    },
+    {
+      "record_id": 20312,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 239
+    },
+    {
+      "record_id": 20313,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 46
+    },
+    {
+      "record_id": 20314,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 254
+    },
+    {
+      "record_id": 20315,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 68
+    },
+    {
+      "record_id": 20316,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 40
+    },
+    {
+      "record_id": 20317,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 13
+    },
+    {
+      "record_id": 20318,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 234
+    },
+    {
+      "record_id": 20319,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 129
+    },
+    {
+      "record_id": 20320,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 100
+    },
+    {
+      "record_id": 20321,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 52
+    },
+    {
+      "record_id": 20322,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 112
+    },
+    {
+      "record_id": 20323,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 64
+    },
+    {
+      "record_id": 20324,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 168
+    },
+    {
+      "record_id": 20325,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 134
+    },
+    {
+      "record_id": 20326,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 81
+    },
+    {
+      "record_id": 20327,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 38
+    },
+    {
+      "record_id": 20328,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 9
+    },
+    {
+      "record_id": 20329,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 183
+    },
+    {
+      "record_id": 20330,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 151
+    },
+    {
+      "record_id": 20331,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 206
+    },
+    {
+      "record_id": 20332,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 94
+    },
+    {
+      "record_id": 20333,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 51
+    },
+    {
+      "record_id": 20334,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 226
+    },
+    {
+      "record_id": 20335,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 0
+    },
+    {
+      "record_id": 20336,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 139
+    },
+    {
+      "record_id": 20337,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 160
+    },
+    {
+      "record_id": 20338,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 30
+    },
+    {
+      "record_id": 20339,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 247
+    },
+    {
+      "record_id": 20340,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 176
+    },
+    {
+      "record_id": 20341,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 135
+    },
+    {
+      "record_id": 20342,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 71
+    },
+    {
+      "record_id": 20343,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 28
+    },
+    {
+      "record_id": 20344,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 80
+    },
+    {
+      "record_id": 20345,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 32
+    },
+    {
+      "record_id": 20346,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 139
+    },
+    {
+      "record_id": 20347,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 93
+    },
+    {
+      "record_id": 20348,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 106
+    },
+    {
+      "record_id": 20349,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 57
+    },
+    {
+      "record_id": 20350,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 197
+    },
+    {
+      "record_id": 20351,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 148
+    },
+    {
+      "record_id": 20352,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 208
+    },
+    {
+      "record_id": 20353,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 118
+    },
+    {
+      "record_id": 20354,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 72
+    },
+    {
+      "record_id": 20355,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 78
+    },
+    {
+      "record_id": 20356,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 188
+    },
+    {
+      "record_id": 20357,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 120
+    },
+    {
+      "record_id": 20358,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 176
+    },
+    {
+      "record_id": 20359,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 128
+    },
+    {
+      "record_id": 20360,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 246
+    },
+    {
+      "record_id": 20361,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 190
+    },
+    {
+      "record_id": 20362,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 135
+    },
+    {
+      "record_id": 20363,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 95
+    },
+    {
+      "record_id": 20364,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 158
+    },
+    {
+      "record_id": 20365,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 110
+    },
+    {
+      "record_id": 20366,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 180
+    },
+    {
+      "record_id": 20367,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 152
+    },
+    {
+      "record_id": 20368,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 125
+    },
+    {
+      "record_id": 20369,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 90
+    },
+    {
+      "record_id": 20370,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 241
+    },
+    {
+      "record_id": 20371,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 212
+    },
+    {
+      "record_id": 20372,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 164
+    },
+    {
+      "record_id": 20373,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 224
+    },
+    {
+      "record_id": 20374,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 176
+    },
+    {
+      "record_id": 20375,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 24
+    },
+    {
+      "record_id": 20376,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 246
+    },
+    {
+      "record_id": 20377,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 193
+    },
+    {
+      "record_id": 20378,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 150
+    },
+    {
+      "record_id": 20379,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 121
+    },
+    {
+      "record_id": 20380,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 39
+    },
+    {
+      "record_id": 20381,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 7
+    },
+    {
+      "record_id": 20382,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 62
+    },
+    {
+      "record_id": 20383,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 206
+    },
+    {
+      "record_id": 20384,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 163
+    },
+    {
+      "record_id": 20385,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 82
+    },
+    {
+      "record_id": 20386,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 112
+    },
+    {
+      "record_id": 20387,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 251
+    },
+    {
+      "record_id": 20388,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 16
+    },
+    {
+      "record_id": 20389,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 143
+    },
+    {
+      "record_id": 20390,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 104
+    },
+    {
+      "record_id": 20391,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 33
+    },
+    {
+      "record_id": 20392,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 248
+    },
+    {
+      "record_id": 20393,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 184
+    },
+    {
+      "record_id": 20394,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 141
+    },
+    {
+      "record_id": 20395,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 193
+    },
+    {
+      "record_id": 20396,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 145
+    },
+    {
+      "record_id": 20397,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 252
+    },
+    {
+      "record_id": 20398,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 206
+    },
+    {
+      "record_id": 20399,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 219
+    },
+    {
+      "record_id": 20400,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 170
+    },
+    {
+      "record_id": 20401,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 54
+    },
+    {
+      "record_id": 20402,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 5
+    },
+    {
+      "record_id": 20403,
+      "original_logical_code": 6,
+      "group": "attack",
+      "reference_source_byte": 65
+    },
+    {
+      "record_id": 20404,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 231
+    },
+    {
+      "record_id": 20405,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 185
+    },
+    {
+      "record_id": 20406,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 191
+    },
+    {
+      "record_id": 20407,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 45
+    },
+    {
+      "record_id": 20408,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 233
+    },
+    {
+      "record_id": 20409,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 33
+    },
+    {
+      "record_id": 20410,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 241
+    },
+    {
+      "record_id": 20411,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 103
+    },
+    {
+      "record_id": 20412,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 47
+    },
+    {
+      "record_id": 20413,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 248
+    },
+    {
+      "record_id": 20414,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 208
+    },
+    {
+      "record_id": 20415,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 15
+    },
+    {
+      "record_id": 20416,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 223
+    },
+    {
+      "record_id": 20417,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 37
+    },
+    {
+      "record_id": 20418,
+      "original_logical_code": 6,
+      "group": "defense",
+      "reference_source_byte": 9
+    },
+    {
+      "record_id": 20419,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 239
+    },
+    {
+      "record_id": 20420,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 204
+    },
+    {
+      "record_id": 20421,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 99
+    },
+    {
+      "record_id": 20422,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 70
+    },
+    {
+      "record_id": 20423,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 22
+    },
+    {
+      "record_id": 20424,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 82
+    },
+    {
+      "record_id": 20425,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 34
+    },
+    {
+      "record_id": 20426,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 138
+    },
+    {
+      "record_id": 20427,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 104
+    },
+    {
+      "record_id": 20428,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 51
+    },
+    {
+      "record_id": 20429,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 8
+    },
+    {
+      "record_id": 20430,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 235
+    },
+    {
+      "record_id": 20431,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 153
+    },
+    {
+      "record_id": 20432,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 121
+    },
+    {
+      "record_id": 20433,
+      "original_logical_code": 7,
+      "group": "attack",
+      "reference_source_byte": 176
+    },
+    {
+      "record_id": 20434,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 64
+    },
+    {
+      "record_id": 20435,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 21
+    },
+    {
+      "record_id": 20436,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 196
+    },
+    {
+      "record_id": 20437,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 226
+    },
+    {
+      "record_id": 20438,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 109
+    },
+    {
+      "record_id": 20439,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 130
+    },
+    {
+      "record_id": 20440,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 0
+    },
+    {
+      "record_id": 20441,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 217
+    },
+    {
+      "record_id": 20442,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 146
+    },
+    {
+      "record_id": 20443,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 105
+    },
+    {
+      "record_id": 20444,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 41
+    },
+    {
+      "record_id": 20445,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 254
+    },
+    {
+      "record_id": 20446,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 50
+    },
+    {
+      "record_id": 20447,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 2
+    },
+    {
+      "record_id": 20448,
+      "original_logical_code": 7,
+      "group": "defense",
+      "reference_source_byte": 109
+    },
+    {
+      "record_id": 20843,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 146
+    },
+    {
+      "record_id": 20845,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 96
+    },
+    {
+      "record_id": 20846,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 235
+    },
+    {
+      "record_id": 20847,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 0
+    },
+    {
+      "record_id": 20848,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 126
+    },
+    {
+      "record_id": 20849,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 87
+    },
+    {
+      "record_id": 20850,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 16
+    },
+    {
+      "record_id": 20851,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 231
+    },
+    {
+      "record_id": 20852,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 167
+    },
+    {
+      "record_id": 20853,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 124
+    },
+    {
+      "record_id": 20854,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 176
+    },
+    {
+      "record_id": 20855,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 128
+    },
+    {
+      "record_id": 20856,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 235
+    },
+    {
+      "record_id": 20857,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 189
+    },
+    {
+      "record_id": 20858,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 202
+    },
+    {
+      "record_id": 20859,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 153
+    },
+    {
+      "record_id": 20860,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 37
+    },
+    {
+      "record_id": 21339,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 65
+    },
+    {
+      "record_id": 21340,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 36
+    },
+    {
+      "record_id": 21341,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 244
+    },
+    {
+      "record_id": 21342,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 48
+    },
+    {
+      "record_id": 21343,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 0
+    },
+    {
+      "record_id": 21344,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 104
+    },
+    {
+      "record_id": 21345,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 70
+    },
+    {
+      "record_id": 21346,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 17
+    },
+    {
+      "record_id": 21347,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 230
+    },
+    {
+      "record_id": 21348,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 201
+    },
+    {
+      "record_id": 21349,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 119
+    },
+    {
+      "record_id": 21350,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 87
+    },
+    {
+      "record_id": 21351,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 142
+    },
+    {
+      "record_id": 21352,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 30
+    },
+    {
+      "record_id": 21353,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 243
+    },
+    {
+      "record_id": 21355,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 192
+    },
+    {
+      "record_id": 21356,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 75
+    },
+    {
+      "record_id": 21357,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 96
+    },
+    {
+      "record_id": 21358,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 222
+    },
+    {
+      "record_id": 21359,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 183
+    },
+    {
+      "record_id": 21360,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 112
+    },
+    {
+      "record_id": 21361,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 71
+    },
+    {
+      "record_id": 21362,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 7
+    },
+    {
+      "record_id": 21363,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 220
+    },
+    {
+      "record_id": 21364,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 16
+    },
+    {
+      "record_id": 21365,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 224
+    },
+    {
+      "record_id": 21366,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 75
+    },
+    {
+      "record_id": 21367,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 29
+    },
+    {
+      "record_id": 21368,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 42
+    },
+    {
+      "record_id": 21369,
+      "original_logical_code": 5,
+      "group": "common",
+      "reference_source_byte": 249
+    },
+    {
+      "record_id": 22259,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 213
+    },
+    {
+      "record_id": 22260,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 17
+    },
+    {
+      "record_id": 22261,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 225
+    },
+    {
+      "record_id": 22262,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 73
+    },
+    {
+      "record_id": 22263,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 39
+    },
+    {
+      "record_id": 22264,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 242
+    },
+    {
+      "record_id": 22265,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 199
+    },
+    {
+      "record_id": 22266,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 170
+    },
+    {
+      "record_id": 22267,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 88
+    },
+    {
+      "record_id": 22268,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 56
+    },
+    {
+      "record_id": 22269,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 111
+    },
+    {
+      "record_id": 22270,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 255
+    },
+    {
+      "record_id": 22271,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 212
+    },
+    {
+      "record_id": 22272,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 131
+    },
+    {
+      "record_id": 22273,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 161
+    },
+    {
+      "record_id": 22274,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 44
+    },
+    {
+      "record_id": 22275,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 65
+    },
+    {
+      "record_id": 22276,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 191
+    },
+    {
+      "record_id": 22277,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 152
+    },
+    {
+      "record_id": 22278,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 81
+    },
+    {
+      "record_id": 22279,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 40
+    },
+    {
+      "record_id": 22280,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 232
+    },
+    {
+      "record_id": 22281,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 189
+    },
+    {
+      "record_id": 22282,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 241
+    },
+    {
+      "record_id": 22283,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 193
+    },
+    {
+      "record_id": 22284,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 44
+    },
+    {
+      "record_id": 22285,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 254
+    },
+    {
+      "record_id": 22286,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 11
+    },
+    {
+      "record_id": 22287,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 218
+    },
+    {
+      "record_id": 22288,
+      "original_logical_code": 6,
+      "group": "common",
+      "reference_source_byte": 102
+    },
+    {
+      "record_id": 22499,
+      "original_logical_code": 4,
+      "group": "common",
+      "reference_source_byte": 215
+    },
+    {
+      "record_id": 24870,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 193
+    },
+    {
+      "record_id": 24871,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 81
+    },
+    {
+      "record_id": 24872,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 38
+    },
+    {
+      "record_id": 24873,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 213
+    },
+    {
+      "record_id": 24874,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 243
+    },
+    {
+      "record_id": 24875,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 126
+    },
+    {
+      "record_id": 24876,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 147
+    },
+    {
+      "record_id": 24877,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 17
+    },
+    {
+      "record_id": 24878,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 234
+    },
+    {
+      "record_id": 24879,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 163
+    },
+    {
+      "record_id": 24880,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 122
+    },
+    {
+      "record_id": 24881,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 58
+    },
+    {
+      "record_id": 24882,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 15
+    },
+    {
+      "record_id": 24883,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 67
+    },
+    {
+      "record_id": 24884,
+      "original_logical_code": 8,
+      "group": "attack",
+      "reference_source_byte": 19
+    },
+    {
+      "record_id": 24885,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 126
+    },
+    {
+      "record_id": 24886,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 80
+    },
+    {
+      "record_id": 24887,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 93
+    },
+    {
+      "record_id": 24888,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 44
+    },
+    {
+      "record_id": 24889,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 184
+    },
+    {
+      "record_id": 24890,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 135
+    },
+    {
+      "record_id": 24891,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 195
+    },
+    {
+      "record_id": 24892,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 105
+    },
+    {
+      "record_id": 24893,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 59
+    },
+    {
+      "record_id": 24894,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 65
+    },
+    {
+      "record_id": 24895,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 175
+    },
+    {
+      "record_id": 24896,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 107
+    },
+    {
+      "record_id": 24897,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 163
+    },
+    {
+      "record_id": 24898,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 115
+    },
+    {
+      "record_id": 24899,
+      "original_logical_code": 8,
+      "group": "defense",
+      "reference_source_byte": 233
+    },
+    {
+      "record_id": 24961,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 54
+    },
+    {
+      "record_id": 24962,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 6
+    },
+    {
+      "record_id": 24963,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 66
+    },
+    {
+      "record_id": 24964,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 18
+    },
+    {
+      "record_id": 24965,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 122
+    },
+    {
+      "record_id": 24966,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 88
+    },
+    {
+      "record_id": 24967,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 35
+    },
+    {
+      "record_id": 24968,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 248
+    },
+    {
+      "record_id": 24969,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 219
+    },
+    {
+      "record_id": 24970,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 137
+    },
+    {
+      "record_id": 24971,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 105
+    },
+    {
+      "record_id": 24972,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 160
+    },
+    {
+      "record_id": 24973,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 48
+    },
+    {
+      "record_id": 24974,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 5
+    },
+    {
+      "record_id": 24975,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 180
+    },
+    {
+      "record_id": 24976,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 210
+    },
+    {
+      "record_id": 24977,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 93
+    },
+    {
+      "record_id": 24978,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 114
+    },
+    {
+      "record_id": 24979,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 240
+    },
+    {
+      "record_id": 24980,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 201
+    },
+    {
+      "record_id": 24981,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 130
+    },
+    {
+      "record_id": 24982,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 89
+    },
+    {
+      "record_id": 24983,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 25
+    },
+    {
+      "record_id": 24984,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 238
+    },
+    {
+      "record_id": 24985,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 34
+    },
+    {
+      "record_id": 24986,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 242
+    },
+    {
+      "record_id": 24987,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 93
+    },
+    {
+      "record_id": 24988,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 47
+    },
+    {
+      "record_id": 24989,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 60
+    },
+    {
+      "record_id": 24990,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 11
+    },
+    {
+      "record_id": 24991,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 151
+    },
+    {
+      "record_id": 24992,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 102
+    },
+    {
+      "record_id": 24993,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 162
+    },
+    {
+      "record_id": 24994,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 72
+    },
+    {
+      "record_id": 24995,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 26
+    },
+    {
+      "record_id": 24996,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 32
+    },
+    {
+      "record_id": 24997,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 142
+    },
+    {
+      "record_id": 24998,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 74
+    },
+    {
+      "record_id": 24999,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 130
+    },
+    {
+      "record_id": 25000,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 82
+    },
+    {
+      "record_id": 25001,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 200
+    },
+    {
+      "record_id": 25002,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 144
+    },
+    {
+      "record_id": 25003,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 89
+    },
+    {
+      "record_id": 25004,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 49
+    },
+    {
+      "record_id": 25005,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 112
+    },
+    {
+      "record_id": 25006,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 64
+    },
+    {
+      "record_id": 25007,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 134
+    },
+    {
+      "record_id": 25008,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 106
+    },
+    {
+      "record_id": 25009,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 79
+    },
+    {
+      "record_id": 25010,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 44
+    },
+    {
+      "record_id": 25011,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 195
+    },
+    {
+      "record_id": 25012,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 166
+    },
+    {
+      "record_id": 25013,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 118
+    },
+    {
+      "record_id": 25014,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 178
+    },
+    {
+      "record_id": 25015,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 130
+    },
+    {
+      "record_id": 25016,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 234
+    },
+    {
+      "record_id": 25017,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 200
+    },
+    {
+      "record_id": 25018,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 147
+    },
+    {
+      "record_id": 25019,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 104
+    },
+    {
+      "record_id": 25020,
+      "original_logical_code": 7,
+      "group": "common",
+      "reference_source_byte": 75
+    },
+    {
+      "record_id": 25867,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 196
+    },
+    {
+      "record_id": 25868,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 58
+    },
+    {
+      "record_id": 25869,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 2
+    },
+    {
+      "record_id": 25870,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 203
+    },
+    {
+      "record_id": 25871,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 163
+    },
+    {
+      "record_id": 25872,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 226
+    },
+    {
+      "record_id": 25873,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 178
+    },
+    {
+      "record_id": 25874,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 248
+    },
+    {
+      "record_id": 25875,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 220
+    },
+    {
+      "record_id": 25876,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 193
+    },
+    {
+      "record_id": 25877,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 158
+    },
+    {
+      "record_id": 25878,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 53
+    },
+    {
+      "record_id": 25879,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 24
+    },
+    {
+      "record_id": 25880,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 232
+    },
+    {
+      "record_id": 25881,
+      "original_logical_code": 9,
+      "group": "attack",
+      "reference_source_byte": 36
+    },
+    {
+      "record_id": 25882,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 244
+    },
+    {
+      "record_id": 25883,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 92
+    },
+    {
+      "record_id": 25884,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 58
+    },
+    {
+      "record_id": 25885,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 5
+    },
+    {
+      "record_id": 25886,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 218
+    },
+    {
+      "record_id": 25887,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 189
+    },
+    {
+      "record_id": 25888,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 107
+    },
+    {
+      "record_id": 25889,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 75
+    },
+    {
+      "record_id": 25890,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 130
+    },
+    {
+      "record_id": 25891,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 18
+    },
+    {
+      "record_id": 25892,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 231
+    },
+    {
+      "record_id": 25893,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 150
+    },
+    {
+      "record_id": 25894,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 180
+    },
+    {
+      "record_id": 25895,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 63
+    },
+    {
+      "record_id": 25896,
+      "original_logical_code": 9,
+      "group": "defense",
+      "reference_source_byte": 84
+    }
+  ]
+}

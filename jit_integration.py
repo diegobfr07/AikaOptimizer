@@ -22,6 +22,11 @@ SERVER_NAME = "AIKAOptimizerV4_Instance"
 EXTENSAO = ".jit"
 MENSAGEM_REFRESH_HISTORICO = "AUTOMOD_HISTORY_REFRESH"
 
+# Identidade registrada no Windows (Default Apps). Mantemos o nome atual V4.1 e
+# o nome legado V4.0 apenas para migração/desregistro seguro (nunca de terceiros).
+NOME_REGISTRADO = "AIKA Optimizer V4.1"
+NOME_REGISTRADO_LEGADO = "AIKA Optimizer V4.0"
+
 
 def _caminho_projeto():
     """Diretório do projeto (onde main.py e icone.ico vivem)."""
@@ -149,7 +154,7 @@ def _tem_registered_app():
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\RegisteredApplications") as k:
             try:
-                winreg.QueryValueEx(k, "AIKA Optimizer V4.0")
+                winreg.QueryValueEx(k, NOME_REGISTRADO)
                 return True
             except Exception:
                 return False
@@ -207,15 +212,19 @@ def registrar_integracao_windows():
             winreg.SetValueEx(k, None, 0, winreg.REG_SZ, PROGID)
 
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\AIKAOptimizer\Capabilities") as k:
-        winreg.SetValueEx(k, "ApplicationName", 0, winreg.REG_SZ, "AIKA Optimizer V4.0")
+        winreg.SetValueEx(k, "ApplicationName", 0, winreg.REG_SZ, NOME_REGISTRADO)
         winreg.SetValueEx(k, "ApplicationDescription", 0, winreg.REG_SZ,
                           "Ferramentas de otimização e modding para AIKA.")
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\AIKAOptimizer\Capabilities\FileAssociations") as k:
         winreg.SetValueEx(k, ".jit", 0, winreg.REG_SZ, PROGID)
 
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\RegisteredApplications") as k:
-        winreg.SetValueEx(k, "AIKA Optimizer V4.0", 0, winreg.REG_SZ,
+        winreg.SetValueEx(k, NOME_REGISTRADO, 0, winreg.REG_SZ,
                           r"Software\AIKAOptimizer\Capabilities")
+
+    # Migração: remove apenas a entrada legada própria (V4.0), se existir,
+    # evitando duas entradas visíveis em RegisteredApplications.
+    _remover_valor(r"Software\RegisteredApplications", NOME_REGISTRADO_LEGADO)
 
     notificar_shell_associacao()
 
@@ -267,7 +276,8 @@ def desregistrar_integracao_windows():
         except Exception:
             pass
 
-    _remover_valor(r"Software\RegisteredApplications", "AIKA Optimizer V4.0")
+    _remover_valor(r"Software\RegisteredApplications", NOME_REGISTRADO)
+    _remover_valor(r"Software\RegisteredApplications", NOME_REGISTRADO_LEGADO)
     _apagar_arvore(r"Software\AIKAOptimizer\Capabilities")
 
     notificar_shell_associacao()
@@ -472,7 +482,7 @@ def _validar_dds(caminho_dds):
 
 def _injetar_jit(caminho_jit, injetor):
     """Valida e injeta o próprio JIT no jogo. Retorna (ok, msg)."""
-    from config import PASTA_JOGO_PADRAO, caminho_seguro
+    from config import obter_pasta_jogo_atual, caminho_seguro
 
     caminho_jit = os.path.abspath(os.path.normpath(caminho_jit))
 
@@ -486,11 +496,12 @@ def _injetar_jit(caminho_jit, injetor):
     except Exception:
         return False, "Não foi possível ler o arquivo .JIT."
 
-    if caminho_seguro(PASTA_JOGO_PADRAO, caminho_jit):
+    pasta_jogo = obter_pasta_jogo_atual()
+    if caminho_seguro(pasta_jogo, caminho_jit):
         return False, "Este arquivo já está na pasta do AIKA. Selecione um JIT externo/modificado para injetar."
 
     try:
-        resultado = injetor([caminho_jit])
+        resultado = injetor([caminho_jit], pasta_jogo)
     except Exception as e:
         return False, "Erro na injeção: " + str(e)
 

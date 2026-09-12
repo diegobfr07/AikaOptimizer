@@ -6,11 +6,17 @@
 __pycache__/
 *.py[cod]
 *.pyo
+.pytest_cache/
+*.tmp
+
+# Python virtual environments
+.venv/
+venv/
+env/
 
 # PyInstaller
 build/
 dist/
-*.spec
 
 # Inno Setup installer compiled output
 installer/
@@ -30,8 +36,7 @@ _fix_priorities.py
 _analyze.py
 _deep_analyze.py
 
-# Legacy standalone tool (tkinter, not part of V4 runtime)
-listadeset.py
+# listadeset.py e preservada como ferramenta standalone (tkinter); nao ignorar.
 
 # IDE / Editor
 .vscode/

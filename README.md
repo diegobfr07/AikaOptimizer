@@ -1,18 +1,19 @@
-# AIKA Optimizer V4.0
+# AIKA Optimizer V4.1.0
 
 **Ferramenta de otimizacao, modding e extracao de assets para AIKA Online Brasil.**
 
-Desenvolvido em Python com interface PySide6, arquitetura modular e integracao com o Windows. Otimizacao por sessao, AutoMod com backup, extracao de texturas .JIT, organizador de sets e ferramentas de sistema.
+Desenvolvido em Python com interface PySide6, arquitetura modular e integracao com o Windows. Otimizacao por sessao, AutoMod com backup, extracao de texturas .JIT, organizador de sets, renderizador dgVoodoo2, Cores das Pedras e Central de Ajuda.
 
 ---
 
 ## Sobre o projeto
 
-O AIKA Optimizer V4.0 e uma suite integrada para jogadores de AIKA Online que desejam melhorar a fluidez do jogo, gerenciar mods com seguranca e explorar os assets do cliente. O projeto e estruturado em modulos independentes — cada um com responsabilidade bem definida — e oferece uma interface grafica completa em PySide6.
+O AIKA Optimizer V4.1.0 e uma suite integrada para jogadores de AIKA Online que desejam melhorar a fluidez do jogo, gerenciar mods com seguranca e explorar os assets do cliente. O projeto e estruturado em modulos independentes — cada um com responsabilidade bem definida — e oferece uma interface grafica completa em PySide6.
 
-**Estado atual:** Release Candidate V4.0.
+**Estado atual:** V4.1.0 — release final (validada em Windows 10/11: instalacao limpa, upgrade V4.0 -> V4.1 e desinstalacao aprovados).
 **Plataforma:** Windows 10 / Windows 11 (64-bit).
 **Licenca:** MIT.
+**Compatibilidade:** a V4.1 mantem compatibilidade com configuracoes e backups suportados da V4.0, adotando uma politica de restauracao mais conservadora.
 
 ---
 
@@ -60,6 +61,14 @@ A aba Performance oferece ferramentas manuais e situacionais — nenhuma delas e
 - **TCP NoDelay e Throttling:** configuracoes opcionais de rede via Registry.
 - **Prioridade Global:** registro de Image File Execution Options para os executaveis do AIKA.
 
+### Renderizador dgVoodoo2
+
+Permite ao cliente AIKA (DirectX 9) utilizar DirectX 11 como backend grafico:
+
+- Perfis **Performance**, **Balanced** e **Quality**, alem do modo **AUTO**, que seleciona um perfil automaticamente conforme o hardware detectado.
+- Ativacao e restauracao com backup e verificacao de integridade dos arquivos.
+- Utiliza os componentes dgVoodoo2 2.87.4 redistribuidos em `third_party/dgvoodoo2`.
+
 ### AutoMod
 
 Sistema de substituicao de arquivos com seguranca:
@@ -93,12 +102,35 @@ Extracao de texturas do formato proprietario `.jit` utilizado pelo cliente do jo
 Ferramenta de organizacao e conversao de assets:
 - Percorre os arquivos do AIKA e identifica sets por convencoes de nome.
 - **Organiza por classe** (Guerreiro, Templaria, Atirador, Dual, FC, Cleriga).
+- Agrupa variantes pelo prefixo visual do ID: `1101`, `1102` e `1103` ficam em `Familia_Armadura_11`, mantendo cada ID em sua propria subpasta selecionavel.
+- Reconhece sets completos antigos de 6 partes, completos atuais de 5 partes e aparencias parciais/individuais sem descartar nenhuma delas.
 - Separa **Mesh**, **Texture** e **Objects** em pastas estruturadas.
-- **Conversao MSH -> OBJ** para modelos 3D.
+- **Conversao MSH/MS3 -> OBJ** para visualizar armaduras e armas em 3D, preservando os arquivos originais.
 - **Extracao JIT -> DDS/TGA** durante a organizacao.
 - **Barra de progresso** com processamento em worker thread — a interface nao congela.
 - **Cancelamento cooperativo:** interrompe o processo com seguranca preservando os arquivos ja concluidos.
 - **Modo Seguro** que verifica as pastas de destino antes de sobrescrever.
+- Gera `set_manifest.json` para cada variante, `family_manifest.json` para a familia visual e `weapon_manifest.json` para as armas mantidas separadamente.
+
+### Injetor de Sets e Armas — modos separados
+
+- O seletor superior alterna entre **SETS** e **ARMAS**, limpando selecoes e staging ao trocar de modo.
+- No modo Sets, prepara uma variante de armadura doadora para um set alvo da mesma classe usando exclusivamente `.MSH` e `.JIT`.
+- No modo Armas, prepara uma arma doadora para outra arma da mesma classe e tipo usando exclusivamente `.MS3` e `.JIT`.
+- IDs de armas não são relacionados aos IDs das armaduras; doador e alvo são escolhidos manualmente dentro do modo Armas.
+- O usuario seleciona a subpasta tecnica exata, como `Set_Armadura_1101`; a pasta `Familia_Armadura_11` serve apenas para agrupamento visual.
+- Quando uma variante alvo `02`, `03` etc. não possui uma peça `.msh`, o Injetor procura essa mesma peça exclusivamente na variante-base `01` da mesma família e classe. Se existir, o arquivo doador é preparado para esse destino físico compartilhado e a interface exibe um aviso explícito. Esse fallback nunca é aplicado a `.jit`, não inventa texturas e não altera outras peças.
+- Texturas de efeito com sufixo `EF` só substituem destinos `EF` equivalentes.
+- `.OBJ`, `.DDS` e `.TGA` extraídos para visualização nunca são injetados.
+- Oferece simulação, backup, validação por hash e rollback antes de alterar o cliente.
+- O histórico de modificações ativas é exibido em cards agrupados por data, com horário, tipo, destino e seleção múltipla para restauração.
+
+### Cores das Pedras
+
+Ferramenta para gerenciar as cores das pedras do cliente:
+
+- Leitura e edicao do perfil de cores (`itemlist6_color_profile.json`).
+- Backup versionado por instalacao e restauracao.
 
 ### Integracao com Windows
 
@@ -109,6 +141,14 @@ Ferramenta de organizacao e conversao de assets:
 - **Inicializacao com Windows** (opcional, configuravel).
 - **Bandeja do sistema:** fechar para a bandeja mantem o aplicativo ativo com Watchdog de sessao.
 - **Iniciar minimizado** quando ativado com `--startup`.
+
+### Cliente AIKA configuravel
+
+O caminho do cliente AIKA e configuravel e validado (executaveis e estrutura reconhecidos), sem depender de um caminho fixo.
+
+### Central de Ajuda
+
+Central de ajuda integrada com navegacao por categoria, servindo como manual do usuario do AIKA Optimizer.
 
 ### Seguranca, backup e restauracao
 
@@ -137,14 +177,24 @@ O projeto adota uma abordagem defensiva:
 
 ## Instalacao
 
-1. Baixe o instalador da V4.0 na pagina de [Releases](https://github.com/diegobfr07/AikaOptimizer/releases).
+1. Baixe o instalador da V4.1 na pagina de [Releases](https://github.com/diegobfr07/AikaOptimizer/releases).
 2. Execute o instalador e siga o assistente.
 3. Autorize a elevacao de privilegios quando solicitada.
-4. Abra o AIKA Optimizer V4.0 pelo atalho na Area de Trabalho.
+4. Abra o AIKA Optimizer V4.1 pelo atalho na Area de Trabalho.
 5. Configure as opcoes desejadas na aba **Configuracoes**.
 6. Selecione o jogo e aplique as otimizacoes conforme sua preferencia.
 
-*(O instalador oficial da V4.0 utiliza Inno Setup e PyInstaller. O build final e seu hash serao publicados junto com o release.)*
+*(O instalador oficial da V4.1 utiliza Inno Setup e PyInstaller. O instalador e unsigned — o Windows SmartScreen pode exibir um aviso; confira o hash SHA-256 divulgado na pagina de Releases.)*
+
+### Atualizacao (upgrade) da V4.0 para a V4.1
+
+1. Baixe o instalador da V4.1 e execute-o sobre a instalacao existente.
+2. E uma atualizacao legitima do mesmo produto (mesmo AppId) — nao cria instalacao paralela.
+3. As configuracoes e backups da V4.0 sao preservados, e o autostart continua funcionando apos o upgrade.
+
+### Restauracao
+
+Os ajustes persistentes do sistema (Registry, associacoes de arquivo, prioridades) podem ser revertidos quando desejado pela aba **Restauracao/Seguranca** do aplicativo.
 
 ---
 
@@ -156,7 +206,7 @@ O projeto adota uma abordagem defensiva:
 3. Clique em **INICIAR OTIMIZACAO GLOBAL** para aplicar ajustes de sistema, rede e prioridade.
 4. Inicie o AIKA pelo botao na interface ou manualmente.
 5. Se o **Auto Boost** estiver ativo, o Game Session Optimizer sera acionado automaticamente quando o jogo for detectado.
-6. Minimize para a bandeja — o aplicativo monitora a sessao e restaura o sistema ao final.
+6. Minimize para a bandeja — o aplicativo monitora a sessao e restaura os ajustes da sessao (Booster, prioridades e QoS) ao final.
 
 ### Aplicar mods
 1. Certifique-se de que o jogo esta **fechado**.
@@ -200,13 +250,28 @@ AikaOptimizer/
 |-- audio.py             # Substituicao e restauracao de audio
 |-- textura.py           # Extracao de texturas JIT -> DDS/TGA
 |-- extractor_sets.py    # Organizador de Sets: backend puro
+|-- set_injector.py      # Injetor de Sets e Armas (modos separados)
 |-- jit_integration.py   # Integracao .JIT com Windows Explorer
 |-- seguranca.py         # Backup, transacoes, rollback, snapshots
+|-- dgvoodoo_service.py  # Renderizador dgVoodoo2 (backend)
+|-- dgvoodoo_page.py     # Pagina do Renderizador (UI)
+|-- dgvoodoo_config_engine.py # Engine de config do dgVoodoo.conf
+|-- dgvoodoo_config_schema.py # Schema semantico do dgVoodoo.conf
+|-- hardware_detector.py # Deteccao de hardware (perfil AUTO)
+|-- help_page.py         # Central de Ajuda
+|-- stone_color_page.py  # Cores das Pedras (UI)
+|-- stone_color_service.py # Cores das Pedras (backend)
+|-- itemlist6_color_engine.py # Engine do perfil de cores
+|-- restore_list.py      # Lista de restauracao
 |-- optimizer.py         # Fachada (importa todos os modulos)
-|-- monitor.py           # Monitor de sessao do jogo
+|-- listadeset.py        # Ferramenta standalone preservada (tkinter)
 |-- assets/              # Icones e recursos graficos
+|-- third_party/         # Componentes de terceiros (dgVoodoo2)
 |-- README.md
+|-- THIRD_PARTY_NOTICES.md
 ```
+
+> `monitor.py` e mantido como legacy e NAO faz parte do runtime atual: nao e importado e nao entra no build. `listadeset.py` e preservada como ferramenta standalone (tkinter).
 
 ### Executar em modo desenvolvimento
 
@@ -233,6 +298,8 @@ python main.py
 
 MIT License — Estude, modifique e compartilhe o projeto livremente, mantendo os devidos creditos aos desenvolvedores originais.
 
+Terceiros redistribuidos (dgVoodoo2): veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ---
 
-*Versao 4.0 — Testado em Windows 10 e Windows 11.*
+*Versao V4.1.0 — Testado em Windows 10 e Windows 11.*

@@ -1,6 +1,11 @@
 import os, winreg, psutil, winshell
 from config import *
-from seguranca import fazer_backup_registro, criar_ponto_restauracao, salvar_snapshot_sistema
+from seguranca import (fazer_backup_registro, criar_ponto_restauracao,
+                       salvar_snapshot_sistema, filtro_adaptadores_ativos_ps,
+                       garantir_ifeo_ownership, IFEO_CPU_PRIORITY_CLASS_VALUE,
+                       IFEO_NOOP,
+                       obter_planos_energia_disponiveis, obter_plano_energia_atual,
+                       GUID_ALTO_DESEMPENHO)
 
 def apagar_arquivos_pasta(caminho_pasta):
     if not os.path.exists(caminho_pasta): return
@@ -25,49 +30,128 @@ def limpar_profundo(esvaziar_lixeira=False):
         return True
     except Exception as e: raise e
 
+# Resultados não-fatais da etapa de plano de energia (fallback seguro).
+PLANO_SUCESSO = "success"   # plano Alto Desempenho ativado com sucesso
+PLANO_NOOP = "noop"         # plano Alto Desempenho já ativo (idempotente)
+PLANO_SKIP = "skip"         # plano indisponível ou consulta falhou (não-fatal)
+PLANO_FALHA = "failed"      # tentou ativar e falhou (falha local, não-fatal)
+
+
 def modo_desempenho_maximo():
-    if not executar_comando_seguro(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c']):
-        raise Exception("Falha ao ativar modo de desempenho máximo")
-    return True
+    """Ativa o plano Alto Desempenho se disponível; NUNCA derruba a otimização.
+
+    A ausência do plano (ou falha na consulta/ativação) é tratada como
+    capacidade indisponível, não como erro fatal. Retorna PLANO_SUCESSO /
+    PLANO_NOOP / PLANO_SKIP / PLANO_FALHA. Nunca lança exceção por
+    indisponibilidade do plano e nunca cria planos novos.
+    """
+    planos = obter_planos_energia_disponiveis()
+    if planos is None:
+        log("[AVISO] Não foi possível consultar os planos de energia; ajuste de plano ignorado.")
+        return PLANO_SKIP
+    if GUID_ALTO_DESEMPENHO not in planos:
+        log("[AVISO] Plano Alto Desempenho não está disponível neste Windows; ajuste ignorado.")
+        return PLANO_SKIP
+    atual = obter_plano_energia_atual()
+    if atual and atual.lower() == GUID_ALTO_DESEMPENHO:
+        return PLANO_NOOP  # já ativo — idempotente, sem alteração
+    if not executar_comando_seguro(['powercfg', '/setactive', GUID_ALTO_DESEMPENHO]):
+        log("[AVISO] Não foi possível alterar o plano de energia; demais otimizações continuarão.")
+        return PLANO_FALHA
+    return PLANO_SUCESSO
 
 def otimizar_rede_estabilidade():
     if not executar_comando_seguro(['ipconfig', '/flushdns']): raise Exception("Falha ao limpar cache DNS")
     return True
+
+def _prioridade_igual(valor, atributo):
+    """True se ``valor`` representa a classe de prioridade ``atributo``."""
+    if not hasattr(psutil, atributo):
+        return False
+    try:
+        return int(valor) == int(getattr(psutil, atributo))
+    except (TypeError, ValueError):
+        return valor == getattr(psutil, atributo)
+
 
 def prioridade_total():
     try:
         sucesso = False
         for exe in AIKA_GAME_EXES:
             chave = f"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\{exe}"
-            fazer_backup_registro(chave, f"backup_prioridade_{exe}")
-            cmd = ['reg', 'add', f"{chave}\\PerfOptions", '/v', 'CpuPriorityClass', '/t', 'REG_DWORD', '/d', '6', '/f']
+            status_ownership = garantir_ifeo_ownership(exe)
+            if status_ownership == IFEO_NOOP:
+                # Legado ambíguo JÁ aplicado: o estado persistente desejado
+                # (CpuPriorityClass == valor do Optimizer) já está presente no
+                # Registry. NÃO reescrever, NÃO criar baseline falsa, NÃO
+                # bloquear a Otimização Global. O RESTORE do mesmo estado
+                # permanece conservador (PARTIAL) — a folga é só no APPLY.
+                log(f"[SEGURANÇA] Prioridade persistente de {exe} já aplicada "
+                    f"(backup legado ambíguo preservado; IFEO não alterado).")
+                sucesso = True
+                continue
+            if status_ownership is False:
+                log(f"[SEGURANÇA] Prioridade não aplicada a {exe}: ownership IFEO não garantido.")
+                continue
+            if not fazer_backup_registro(chave, f"backup_prioridade_{exe}"):
+                log(f"[SEGURANÇA] Prioridade não aplicada a {exe}: backup de Registro falhou.")
+                continue
+            cmd = ['reg', 'add', f"{chave}\\PerfOptions", '/v', 'CpuPriorityClass', '/t', 'REG_DWORD', '/d', str(IFEO_CPU_PRIORITY_CLASS_VALUE), '/f']
             if executar_comando_seguro(cmd): sucesso = True
 
         for proc in psutil.process_iter(['name', 'pid']):
             nome = (proc.info.get('name') or "").lower()
-            if nome in AIKA_GAME_EXES:
-                pid = proc.info['pid']
+            if nome not in AIKA_GAME_EXES:
+                continue
+            pid = proc.info['pid']
+            try:
+                p = psutil.Process(pid)
+                # Idempotência multi-instância (AUD prioridade): NUNCA rebaixar
+                # um Aika ativo. Preserva ABOVE/HIGH e só eleva para
+                # ABOVE_NORMAL quando a atual estiver abaixo desse piso.
+                atual = None
                 try:
-                    p = psutil.Process(pid)
-                    if hasattr(psutil, "ABOVE_NORMAL_PRIORITY_CLASS"): p.nice(psutil.ABOVE_NORMAL_PRIORITY_CLASS)
-                    if hasattr(psutil, "IOPRIO_HIGH"): p.ionice(psutil.IOPRIO_HIGH)
-                    sucesso = True
+                    atual = p.nice()
                 except Exception:
+                    atual = None
+                acima_do_piso = (
+                    _prioridade_igual(atual, "ABOVE_NORMAL_PRIORITY_CLASS")
+                    or _prioridade_igual(atual, "HIGH_PRIORITY_CLASS")
+                )
+                if hasattr(psutil, "ABOVE_NORMAL_PRIORITY_CLASS"):
+                    if atual is not None and not acima_do_piso:
+                        p.nice(psutil.ABOVE_NORMAL_PRIORITY_CLASS)
+                elif atual is not None and not _prioridade_igual(atual, "HIGH_PRIORITY_CLASS"):
+                    cmd = ['powershell', '-Command', f"(Get-Process -Id {pid}).PriorityClass = 'AboveNormal'"]
+                    executar_comando_seguro(cmd)
+                if hasattr(psutil, "IOPRIO_HIGH"):
                     try:
-                        cmd = ['powershell', '-Command', f"(Get-Process -Id {pid}).PriorityClass = 'AboveNormal'"]
-                        if executar_comando_seguro(cmd): sucesso = True
-                    except Exception: pass
+                        p.ionice(psutil.IOPRIO_HIGH)
+                    except Exception:
+                        pass
+                sucesso = True
+            except Exception:
+                # Falha pontual de um PID não impede os demais; nunca rebaixar.
+                log(f"[SISTEMA] Prioridade não aplicada ao PID {pid} (preservado sem rebaixamento).")
         return sucesso
     except Exception: return False
 
 def desativar_game_bar():
+    """Desativa a Game Bar/GameDVR (captura e overlay) e configura o modo de
+    comportamento de tela cheia do Windows (GameDVR_FSEBehaviorMode=2) no
+    HKCU do usuário. NÃO aplica IFEO/FullscreenOptimizations por executável —
+    o efeito real é: Game Bar/GameDVR off + preferência de tela cheia do
+    Windows ajustada para não interferir no jogo.
+    """
     try:
-        fazer_backup_registro(r"HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR", "backup_gamedvr")
+        if not fazer_backup_registro(r"HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR", "backup_gamedvr"):
+            return False
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\GameDVR", 0, winreg.KEY_SET_VALUE) as key1:
             winreg.SetValueEx(key1, "AppCaptureEnabled", 0, winreg.REG_DWORD, 0)
             winreg.SetValueEx(key1, "GameDVR_Enabled", 0, winreg.REG_DWORD, 0)
 
-        fazer_backup_registro(r"HKCU\System\GameConfigStore", "backup_gameconfigstore")
+        if not fazer_backup_registro(r"HKCU\System\GameConfigStore", "backup_gameconfigstore"):
+            return False
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0, winreg.KEY_SET_VALUE) as key2:
             winreg.SetValueEx(key2, "GameDVR_Enabled", 0, winreg.REG_DWORD, 0)
             winreg.SetValueEx(key2, "GameDVR_FSEBehaviorMode", 0, winreg.REG_DWORD, 2)
@@ -76,23 +160,61 @@ def desativar_game_bar():
     except Exception: return False
 
 def alterar_dns(escolha):
-    salvar_snapshot_sistema()
+    """Altera o DNS somente nos adaptadores FÍSICOS ativos — o MESMO escopo
+    usado pelo snapshot (obter_dns_atual) e pela restauração
+    (restaurar_snapshot_sistema). VPN, adaptadores virtuais, Loopback e
+    interfaces desconectadas nunca são tocadas. Se houver múltiplos
+    adaptadores físicos ativos, aplica a todos (o snapshot cobre o mesmo
+    conjunto; não há heurística de escolha de um único adaptador)."""
+    if not salvar_snapshot_sistema():
+        return False
     try:
-        base_cmd = "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | "
+        base_cmd = filtro_adaptadores_ativos_ps() + " | "
         if escolha == "Google": cmd = ['powershell', '-Command', base_cmd + "Set-DnsClientServerAddress -ServerAddresses ('8.8.8.8','8.8.4.4')"]
         elif escolha == "Cloudflare": cmd = ['powershell', '-Command', base_cmd + "Set-DnsClientServerAddress -ServerAddresses ('1.1.1.1','1.0.0.1')"]
         else: cmd = ['powershell', '-Command', base_cmd + "Set-DnsClientServerAddress -ResetServerAddresses"]
         return executar_comando_seguro(cmd)
     except Exception: return False
 
+def _normalizar_guid_interface(valor):
+    """Normaliza um GUID de interface (remove chaves, uppercase)."""
+    return str(valor or "").strip().strip('{}').upper()
+
+def _obter_guids_adaptadores_ativos():
+    """GUIDs de interface (Tcpip\\Parameters\\Interfaces) dos adaptadores
+    físicos ativos — mesmo filtro usado pelo DNS. Conjunto vazio significa
+    que não foi possível identificar (ex.: PowerShell indisponível/offline)."""
+    script = filtro_adaptadores_ativos_ps() + " | Select-Object -ExpandProperty InterfaceGuid"
+    saida = _executar_powershell_oculto(script, timeout=20)
+    guids = set()
+    if saida:
+        for linha in saida.splitlines():
+            linha = linha.strip()
+            if linha:
+                guids.add(_normalizar_guid_interface(linha))
+    return guids
+
 def otimizar_tcp_nodelay():
+    """Aplica TcpAckFrequency=1/TCPNoDelay=1 SOMENTE nas subchaves de interface
+    dos adaptadores físicos ativos (mesmo filtro do DNS). Interfaces virtuais,
+    VPN, loopback e desconectadas NÃO são alteradas. Se não for possível
+    identificar o adaptador ativo, nada é alterado (nada de aplicar em todas).
+    O backup de Registro da árvore de interfaces é preservado (restore .reg).
+    """
     try:
         interfaces_path = r"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
-        fazer_backup_registro(f"HKLM\\{interfaces_path}", "backup_tcp_nodelay")
+        guids_ativos = _obter_guids_adaptadores_ativos()
+        if not guids_ativos:
+            log("[REDE] Adaptador de rede ativo não identificado — TCP NoDelay não aplicado (nenhuma interface alterada).")
+            return False
+        if not fazer_backup_registro(f"HKLM\\{interfaces_path}", "backup_tcp_nodelay"):
+            raise RuntimeError("Backup de Registro do TCP NoDelay falhou")
         interfaces_alteradas = 0
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, interfaces_path, 0, winreg.KEY_READ) as key:
             for i in range(winreg.QueryInfoKey(key)[0]):
                 subkey_name = winreg.EnumKey(key, i)
+                if _normalizar_guid_interface(subkey_name) not in guids_ativos:
+                    continue  # fora do escopo: virtual/VPN/desconectada/não ativa
                 subkey_path = f"{interfaces_path}\\{subkey_name}"
                 try:
                     with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey_path, 0, winreg.KEY_SET_VALUE) as subkey:
@@ -361,11 +483,14 @@ def remover_qos_aika():
                 removidas += 1
                 log(f"[QOS] Política removida: {nome}")
         restantes = _listar_politicas_qos_proprias()
+        ok = len(restantes) == 0
+        mensagem = (f"{removidas} política(s) removida(s)." if ok
+                    else f"{removidas} política(s) removida(s); {len(restantes)} restante(s) no ActiveStore.")
         return {
-            "ok": len(restantes) == 0,
+            "ok": ok,
             "ativas": len(restantes),
             "politicas": restantes,
-            "mensagem": f"{removidas} política(s) removida(s).",
+            "mensagem": mensagem,
         }
     except Exception as e:
         return {"ok": False, "ativas": 0, "politicas": [], "mensagem": str(e)}

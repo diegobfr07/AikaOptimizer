@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#BF00FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Faceted crystal kept simple for clear rendering in the sidebar -->
+  <path d="M7 3h10l4 6-9 12L3 9l4-6z"/>
+  <path d="m3 9 4-1 5 13 5-13 4 1"/>
+  <path d="M7 3l5 5 5-5"/>
+  <path d="M7 8h10"/>
+</svg>

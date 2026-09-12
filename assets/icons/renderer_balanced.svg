@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#BF00FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Balanced equalizer sliders -->
+  <line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/>
+  <circle cx="10" cy="6.5" r="2.4"/>
+  <line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/>
+  <circle cx="15.5" cy="17.5" r="2.4"/>
+</svg>

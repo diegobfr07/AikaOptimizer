@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Speedometer arc -->
-  <path d="M3 18 A10 10 0 0 1 21 18"/>
-  <!-- Tick marks -->
-  <line x1="5.5" y1="14" x2="5.5" y2="16" stroke-width="1.2"/>
-  <line x1="9" y1="11.5" x2="9" y2="13.5" stroke-width="1.2"/>
-  <line x1="13" y1="10.5" x2="13" y2="12.5" stroke-width="1.2"/>
-  <line x1="17" y1="11.5" x2="17" y2="13.5" stroke-width="1.2"/>
-  <!-- Needle pointing to high performance -->
-  <line x1="12" y1="12" x2="18" y2="7" stroke="#00FF88" stroke-width="1.8"/>
-  <!-- Center dot -->
-  <circle cx="12" cy="12" r="1.2" fill="#00D4FF" stroke="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#BF00FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Rocket / boost silhouette optimized for small sidebar sizes -->
+  <path d="M14.5 4.5c2-2 4.1-2.2 5-2 .2.9 0 3-2 5l-5.4 5.4-4-4 6.4-4.4z"/>
+  <path d="M8.6 8.4 5.8 9.6 3.5 12l4.1.4"/>
+  <path d="m12.6 12.4-.4 4.1-2.4 2.3-1.2-4.6"/>
+  <circle cx="15.5" cy="6.5" r="1.4"/>
+  <!-- Exhaust trails reinforce acceleration without visual clutter -->
+  <path d="M7 15 3.5 18.5"/>
+  <path d="M8.8 17.2 5 21"/>
 </svg>

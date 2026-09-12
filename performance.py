@@ -13,7 +13,8 @@ def restaurar_timer_resolution():
 def desativar_mpo():
     try:
         chave = r"SOFTWARE\Microsoft\Windows\Dwm"
-        fazer_backup_registro("HKLM\\" + chave, "backup_mpo")
+        if not fazer_backup_registro("HKLM\\" + chave, "backup_mpo"):
+            return False
         # Correção Red Team: Gerenciador de contexto para não vazar a chave no Kernel
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, chave, 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, "OverlayTestMode", 0, winreg.REG_DWORD, 5)
@@ -26,12 +27,30 @@ def limpar_shader_cache():
         localappdata = os.environ.get('LOCALAPPDATA', '')
         pastas = [os.path.join(localappdata, 'D3DSCache'), os.path.join(localappdata, 'NVIDIA', 'DXCache'), os.path.join(localappdata, 'AMD', 'DxCache')]
         
-        pasta_cache_jogo = os.path.join(PASTA_JOGO_PADRAO, "Data", "Shaders", "Cache")
-        if os.path.exists(pasta_cache_jogo) and caminho_seguro(PASTA_JOGO_PADRAO, pasta_cache_jogo):
+        pasta_jogo = obter_pasta_jogo_atual()
+        pasta_cache_jogo = os.path.join(pasta_jogo, "Data", "Shaders", "Cache")
+        if os.path.exists(pasta_cache_jogo) and caminho_seguro(pasta_jogo, pasta_cache_jogo):
             pastas.append(pasta_cache_jogo)
 
+        limpadas = 0
+        falhas = 0
         for p in pastas:
-            if os.path.exists(p): shutil.rmtree(p, ignore_errors=True)
+            if not os.path.exists(p):
+                continue
+            shutil.rmtree(p, ignore_errors=True)
+            if os.path.exists(p):
+                # Arquivos bloqueados/em uso: não anunciar sucesso
+                falhas += 1
+            else:
+                limpadas += 1
+
+        if falhas:
+            log(f"[CACHE] {falhas} pasta(s) de cache não puderam ser totalmente removidas (arquivos em uso).")
+            return False
+        if limpadas == 0:
+            log("[CACHE] Nenhum cache de shader encontrado para limpar.")
+        else:
+            log(f"[CACHE] {limpadas} pasta(s) de cache de shaders removidas.")
         return True
     except Exception as e:
         log("Erro ao limpar shader cache", exception=True)
@@ -40,13 +59,15 @@ def limpar_shader_cache():
 def otimizar_multimidia_jogos():
     try:
         chave_base = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
-        fazer_backup_registro("HKLM\\" + chave_base, "backup_multimidia")
+        if not fazer_backup_registro("HKLM\\" + chave_base, "backup_multimidia"):
+            return False
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, chave_base, 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, "NetworkThrottlingIndex", 0, winreg.REG_DWORD, 0xFFFFFFFF)
             winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 0)
 
         chave_tasks = chave_base + r"\Tasks\Games"
-        fazer_backup_registro("HKLM\\" + chave_tasks, "backup_mmcss_games")
+        if not fazer_backup_registro("HKLM\\" + chave_tasks, "backup_mmcss_games"):
+            return False
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, chave_tasks) as key:
             winreg.SetValueEx(key, "GPU Priority", 0, winreg.REG_DWORD, 8) 
             winreg.SetValueEx(key, "Priority", 0, winreg.REG_DWORD, 6)

@@ -1,0 +1,77 @@
+{
+  "product": "AIKA Optimizer",
+  "version": "V4.1.0",
+  "release_date": "2026-09-11",
+  "git_head_before_release_commit": "1b26950f3bd050fd216e7da40f116e6015e00f8e",
+  "git_branch": "main",
+  "tests": {
+    "passed": 1418,
+    "subtests": 121,
+    "compileall": "exit 0",
+    "command_pytest": "python -m pytest -q",
+    "command_compileall": "python -m compileall -q -x '\\.venv' ."
+  },
+  "build_executable": {
+    "filename": "Aika_Optimizer_V4.1.exe",
+    "path": "dist/Aika_Optimizer_V4.1/Aika_Optimizer_V4.1.exe",
+    "size": 3731851,
+    "sha256": "68287AE09F52B118F97380407742FB460EC8E71CA9013A2BF5F6DAF5DCF9167F",
+    "bundle": "PyInstaller onedir",
+    "pyinstaller_version": "6.22.2"
+  },
+  "installer": {
+    "filename": "AIKA_Optimizer_V4.1_Setup.exe",
+    "path": "installer/AIKA_Optimizer_V4.1_Setup.exe",
+    "size": 49075553,
+    "sha256": "D4447E7B678D26DABAC8DA94377ADDA88EEC2A07A1F49B01CA80696D800D6BAE",
+    "signed": false,
+    "inno_version": "7.1.0",
+    "compile_command": "ISCC.exe \"Projeto Brutal.iss\"",
+    "app_id": "{{2F4C311D-A712-433E-9AA7-C03E9ABE914D}"
+  },
+  "third_party": {
+    "dgvoodoo": {
+      "version": "2.87.4",
+      "D3D9.dll": {
+        "path": "third_party/dgvoodoo2/D3D9.dll",
+        "size": 482304,
+        "sha256": "DB1C445F7BCF699DF1E175E974C779BDC7E19A468680A44884B1AB7078888D04"
+      },
+      "dgVoodoo.conf": {
+        "path": "third_party/dgvoodoo2/dgVoodoo.conf",
+        "size": 21908,
+        "sha256": "3C7DA2FAC3EAAD369DF468E80C9BA9C4DB632C419799B32BBC31279D10985801"
+      }
+    }
+  },
+  "validation": {
+    "clean_install": true,
+    "uninstall": true,
+    "tray_uninstall": true,
+    "upgrade_v40_to_v41": true,
+    "config_preservation": true,
+    "autostart_after_upgrade": true,
+    "installed_exe_hash_verified": true
+  },
+  "candidate_history": {
+    "rejected_installer_sha256": "6590C2182F43BE8EFE9E16BF661DEC88DDE713F6302688BD3DCF8BDCD39238B5",
+    "final_installer_sha256": "D4447E7B678D26DABAC8DA94377ADDA88EEC2A07A1F49B01CA80696D800D6BAE"
+  },
+  "external_checkpoint": {
+    "name": "V4.1_FinalReleaseGate_20260911_212559",
+    "path": "C:/Users/diego/AppData/Local/Temp/AikaOptimizer_Checkpoints/V4.1_FinalReleaseGate_20260911_212559",
+    "outside_repo": true,
+    "zip": "V4.1_FinalReleaseGate_20260911_212559.zip",
+    "zip_sha256": "0169e35c4058f1d817b41c05e2eea5806018fa320e88da7d3bdc19630f27c0a0",
+    "zip_size_bytes": 6868484,
+    "entries": 139,
+    "testzip_divergences": 0,
+    "extract_proof_divergences": 0
+  },
+  "release_notes": "docs/release/V4.1.0_RELEASE_NOTES.md",
+  "publish_status": {
+    "git_commit": "NAO EXECUTADO",
+    "git_tag": "NAO CRIADA",
+    "github_release": "NAO PUBLICADO"
+  }
+}

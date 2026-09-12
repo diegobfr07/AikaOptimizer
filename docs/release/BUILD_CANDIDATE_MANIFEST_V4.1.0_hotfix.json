@@ -1,0 +1,95 @@
+{
+  "project": "AIKA Optimizer",
+  "version": "V4.1.0",
+  "phase": "PRE-INSTALLER RUNTIME HOTFIX — IFEO legado ambiguo + responsividade da Otimizacao Global",
+  "generated_at": "2026-09-11T04:30:00-03:00",
+  "baseline_pre_edit": {
+    "git_head": "1b26950f3bd050fd216e7da40f116e6015e00f8e",
+    "branch": "main",
+    "python": "3.13.15",
+    "arch": "AMD64 (64-bit)",
+    "pytest": "1362 passed, 121 subtests passed",
+    "compileall": "exit 0"
+  },
+  "external_checkpoint": {
+    "name": "V4.1_PreGlobalOptimizationRuntimeHotfix_20260911_041632",
+    "path": "C:/Users/diego/AppData/Local/Temp/AikaOptimizer_Checkpoints/V4.1_PreGlobalOptimizationRuntimeHotfix_20260911_041632",
+    "outside_repo": true,
+    "zip": "V4.1_PreGlobalOptimizationRuntimeHotfix_20260911_041632.zip",
+    "zip_sha256": "7c1870da2a739a26b23a066ced73ab8a469a23b7e1112ee83f82326adb7afae8",
+    "zip_size_bytes": 6849160,
+    "manifest_sha256_entries": 135,
+    "testzip_entries": 135,
+    "testzip_divergences": 0,
+    "extract_proof_files": 135,
+    "extract_proof_divergences": 0
+  },
+  "candidates": [
+    {
+      "id": "candidate_1",
+      "status": "REPROVADO",
+      "reason": "prioridade_total retornou False (IFEO legado ambiguo antes=6/atual=6) e indício de travamento da GUI durante a Otimizacao Global",
+      "name": "Aika_Optimizer_V4.1.exe",
+      "path": "dist/Aika_Optimizer_V4.1/Aika_Optimizer_V4.1.exe",
+      "size_bytes": 3731402,
+      "sha256": "B42C2DFE73D318E21D228923FEF9B974F65D7317CB331BC9DA7EAFC48D5A5253",
+      "timestamp": "2026-09-11T03:38:59",
+      "preserved_evidence": "C:/Users/diego/AppData/Local/Temp/AikaOptimizer_Checkpoints/V4.1_PreGlobalOptimizationRuntimeHotfix_20260911_041632/CANDIDATE1_REPROVADO_EVIDENCE/Aika_Optimizer_V4.1.exe"
+    },
+    {
+      "id": "candidate_2",
+      "status": "HOTFIX — aguardando validacao humana",
+      "name": "Aika_Optimizer_V4.1.exe",
+      "path": "dist/Aika_Optimizer_V4.1/Aika_Optimizer_V4.1.exe",
+      "size_bytes": 3731851,
+      "sha256": "68287AE09F52B118F97380407742FB460EC8E71CA9013A2BF5F6DAF5DCF9167F",
+      "timestamp": "2026-09-11T04:26:12.7287395-03:00",
+      "arch": "AMD64 (64-bit)",
+      "bundle": "PyInstaller onedir",
+      "build": {
+        "tool": "PyInstaller 6.22.2",
+        "command": "python -m PyInstaller --clean --noconfirm Aika_Optimizer_V4.1.spec",
+        "exit_code": 0,
+        "duration_seconds": 35.3,
+        "notes": "WARNING transitorio CopyIcons (error 5) com retry automatico bem-sucedido; sem impacto."
+      }
+    }
+  ],
+  "root_causes": {
+    "bug_1_ifo_ambiguo": {
+      "chain": "legacy backup before=6 + Registry current=6 -> _tentar_adotar_ifeo_legado=LEGADO_AMBIGUO -> garantir_ifeo_ownership=False -> sistema.prioridade_total trata como falha (sucesso permanece False quando nao ha processo AIKA) -> retorna False -> TransacaoSistema.executar levanta RuntimeError -> rollback_total -> '[ERRO] ERRO CRITICO: prioridade_total retornou False'",
+      "fix": "tri-estado em garantir_ifeo_ownership (True/IFEO_NOOP/False); IFEO_NOOP = NO-OP seguro nao bloqueante em prioridade_total (sem reg add, sem baseline, sem consumed). RESTORE inalterado (PARTIAL)."
+    },
+    "bug_2_responsividade": {
+      "finding": "A Otimizacao Global JA roda fora da GUI via executar_em_background/TarefaWorker(QThread). Nenhum refactor de thread necessario.",
+      "blocking_risk": "subprocess.check_output SEM timeout em obter_plano_energia_atual (powercfg /getactivescheme), obter_planos_energia_disponiveis (powercfg /list) e _resolver_index_por_guid (PowerShell) — chamadas que podiam ficar penduradas indefinidamente.",
+      "fix": "timeouts nomeados (POWERCFG_TIMEOUT=15, PS_QUERY_TIMEOUT=20) com fallback seguro (retorna None; etapa tratada como indisponivel)."
+    }
+  },
+  "validation": {
+    "pytest": "1396 passed, 121 subtests passed",
+    "pytest_new_tests": 34,
+    "pytest_file": "tests/test_runtime_hotfix_global_optimization.py",
+    "compileall": "exit 0",
+    "smoke": {
+      "location_outside_repo": "C:/Users/diego/AppData/Local/Temp/AikaSmoke2_20260911_042627",
+      "process_alive": true,
+      "window_title": "AIKA OPTIMIZER V4.1.0",
+      "crash_messagebox": false,
+      "module_or_import_errors": false,
+      "qt_plugin_errors": false,
+      "new_error_log_entries": 0
+    }
+  },
+  "files_changed": [
+    "seguranca.py",
+    "sistema.py",
+    "tests/test_legacy_ifeo_bridge.py",
+    "tests/test_correcao10b.py",
+    "tests/test_correcao10c.py",
+    "tests/test_runtime_hotfix_global_optimization.py"
+  ],
+  "inno_installer": "EXECUTADO — Setup 6590C2182F43BE8EFE9E16BF661DEC88DDE713F6302688BD3DCF8BDCD39238B5 REPROVADO no teste humano de uninstall (processo continuou vivo na bandeja e {app} permaneceu em uso). Detalhes e correcao em docs/release/INSTALLER_CANDIDATE_MANIFEST_V4.1.0_uninstall_hotfix.json",
+  "github_release": "NAO PUBLICADO",
+  "tag": "NAO CRIADA"
+}

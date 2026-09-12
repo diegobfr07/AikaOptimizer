@@ -1,0 +1,134 @@
+{
+  "project": "AIKA Optimizer",
+  "version": "V4.1.0",
+  "phase": "HOTFIX DO INSTALLER — uninstall deixava o processo vivo na bandeja",
+  "generated_at": "2026-09-11T06:10:00-03:00",
+  "baseline_pre_edit": {
+    "git_head": "1b26950f3bd050fd216e7da40f116e6015e00f8e",
+    "branch": "main",
+    "python": "3.13.15",
+    "arch": "AMD64 (64-bit)",
+    "pytest": "1396 passed, 121 subtests passed",
+    "compileall": "exit 0",
+    "inno_compiler": "Inno Setup 7.1.0 (ISCC), C:\\Program Files\\Inno Setup 7\\ISCC.exe"
+  },
+  "external_checkpoint": {
+    "name": "V4.1_PreInstallerUninstallProcessHotfix_20260911_055320",
+    "path": "C:/Users/diego/AppData/Local/Temp/AikaOptimizer_Checkpoints/V4.1_PreInstallerUninstallProcessHotfix_20260911_055320",
+    "outside_repo": true,
+    "zip": "V4.1_PreInstallerUninstallProcessHotfix_20260911_055320.zip",
+    "zip_sha256": "df8f4a7683395fa0fdf05a4c5a7eba3c741854eb21026ada13ac77e4f7e78f10",
+    "zip_size_bytes": 6859082,
+    "manifest_sha256_entries": 137,
+    "testzip_entries": 137,
+    "testzip_divergences": 0,
+    "extract_proof_files": 137,
+    "extract_proof_divergences": 0,
+    "evidence_dir": "REPROVADO_Installer_Evidence (Setup 6590C218... + Build Candidate EXE 68287AE0...)"
+  },
+  "bug_reported": {
+    "sequence": "instalar V4.1 -> abrir -> ativar iniciar com Windows -> reboot -> desinstalar",
+    "symptom": "apos o uninstall a janela nao estava aberta, porem o AIKA Optimizer continuou executando na bandeja; a pasta C:\\Program Files\\AIKA Optimizer permaneceu bloqueada/em uso",
+    "manual_workaround": "fechar o icone da bandeja + finalizar o processo pelo Gerenciador de Tarefas"
+  },
+  "root_cause": {
+    "confirmed_in_code": {
+      "file": "main.py",
+      "lines": "3228-3238",
+      "detail": "closeEvent(): se opt.obter_config('close_to_tray', False) entao event.ignore() + self.esconder_para_bandeja() (self.hide()). Ou seja: WM_CLOSE vira hide-to-tray e o processo NAO encerra."
+    },
+    "confirmed_in_installer": {
+      "detail": "A diretiva [Setup] CloseApplications (Windows Restart Manager) e aplicada apenas pelo Setup; o uninstaller do Inno Setup NAO usa Restart Manager. Portanto nada pedia o encerramento no uninstall.",
+      "source": "documentacao oficial Inno Setup, topico [Setup] CloseApplications"
+    },
+    "consequence": "Sem encerramento, {app}\\Aika_Optimizer_V4.1.exe e {app}\\_internal\\*.dll permanecem bloqueados e {app} nao pode ser removida."
+  },
+  "graceful_exit_audit": {
+    "explicit_exit_function_exists": "sim — main.py -> fechar_app() (menu 'Sair' da bandeja), que define _force_exit=True e delega ao cleanup cooperativo",
+    "remote_graceful_exit": "NAO disponivel: o canal de instancia unica (QLocalServer) so suporta ACTIVATE e payload JIT; nao existe comando de encerramento",
+    "wm_close": "transformado em hide-to-tray quando close_to_tray esta ativo",
+    "forced_termination_justified": true
+  },
+  "fix": {
+    "scope": "somente Projeto Brutal.iss (nenhuma alteracao no aplicativo, nenhum rebuild PyInstaller)",
+    "uninstall": {
+      "section": "[UninstallRun]",
+      "why": "documentacao oficial do Inno Setup: os programas do [UninstallRun] sao executados 'as the first step of uninstallation', antes de qualquer remocao de arquivo",
+      "command_v41": "taskkill.exe /F /T /IM \"Aika_Optimizer_V4.1.exe\"",
+      "command_v40": "taskkill.exe /F /T /IM \"Aika_Optimizer_V4.0.exe\"",
+      "flags": "runhidden waituntilterminated (+ RunOnceId por entrada)",
+      "absence_is_not_an_error": "taskkill retorna codigo != 0 quando o processo nao existe; o Inno apenas registra e prossegue"
+    },
+    "upgrade_install": {
+      "section": "[Code] PrepareToInstall",
+      "why": "upgrade V4.0 -> V4.1 / reinstalacao com o app aberto ou na bandeja; a chamada ja existente do Restart Manager e preservada",
+      "command": "Exec('{sys}\\taskkill.exe', '/F /T /IM \"<nome exato>\"', '', SW_HIDE, ewWaitUntilTerminated, Codigo)",
+      "targets": ["Aika_Optimizer_V4.1.exe", "Aika_Optimizer_V4.0.exe"]
+    },
+    "protection_against_broad_kill": {
+      "wildcards": "nenhum (sem Aika*.exe, sem *.exe)",
+      "only_im_targets": ["Aika_Optimizer_V4.1.exe", "Aika_Optimizer_V4.0.exe"],
+      "never_kill": ["python.exe", "pythonw.exe", "aclient.exe", "aika.exe", "aika_br.exe", "aikabr.exe", "gameengine.exe", "qualquer processo de terceiro"],
+      "no_substring_match": "taskkill /IM casa com o nome exato da imagem do processo"
+    },
+    "preserved_behaviour": [
+      "CloseApplications=yes e RestartApplications=no (upgrade)",
+      "AppId={{2F4C311D-A712-433E-9AA7-C03E9ABE914D}",
+      "DefaultDirName={autopf}\\AIKA Optimizer",
+      "payload: dist\\Aika_Optimizer_V4.1\\* + README.md + THIRD_PARTY_NOTICES.md",
+      "cleanup HKCU Run (AIKA_Optimizer), ProgID JIT, verbo DDS, Capabilities, RegisteredApplications, .jit default",
+      "dados do usuario: %LOCALAPPDATA%\\AIKA Optimizer\\config.json, AikaOptimizer_Backups, clientes externos"
+    ]
+  },
+  "previous_installer": {
+    "name": "AIKA_Optimizer_V4.1_Setup.exe",
+    "sha256": "6590C2182F43BE8EFE9E16BF661DEC88DDE713F6302688BD3DCF8BDCD39238B5",
+    "size_bytes": 49075367,
+    "status": "REPROVADO — uninstall deixou processo vivo na bandeja (pasta {app} em uso)",
+    "evidence_preserved_at": "external_checkpoint/REPROVADO_Installer_Evidence/AIKA_Optimizer_V4.1_Setup.exe"
+  },
+  "new_installer": {
+    "name": "AIKA_Optimizer_V4.1_Setup.exe",
+    "path": "installer/AIKA_Optimizer_V4.1_Setup.exe",
+    "sha256": "D4447E7B678D26DABAC8DA94377ADDA88EEC2A07A1F49B01CA80696D800D6BAE",
+    "size_bytes": 49075553,
+    "compiler": "Inno Setup 7.1.0",
+    "compile_command": "\"C:\\Program Files\\Inno Setup 7\\ISCC.exe\" \"Projeto Brutal.iss\"",
+    "compile_exit_code": 0,
+    "compile_warnings": "apenas o aviso pre-existente PrivilegesRequired=admin + areas HKCU (UsedUserAreasWarning), sem relacao com este hotfix"
+  },
+  "build_candidate_exe": {
+    "name": "Aika_Optimizer_V4.1.exe",
+    "path": "dist/Aika_Optimizer_V4.1/Aika_Optimizer_V4.1.exe",
+    "sha256": "68287AE09F52B118F97380407742FB460EC8E71CA9013A2BF5F6DAF5DCF9167F",
+    "size_bytes": 3731851,
+    "status": "PRESERVADO — nao reconstruido nesta fase (apenas o .iss mudou)"
+  },
+  "files_changed": [
+    "Projeto Brutal.iss",
+    "tests/test_installer_uninstall_process_hotfix.py",
+    "docs/release/INSTALLER_CANDIDATE_MANIFEST_V4.1.0_uninstall_hotfix.json",
+    "docs/release/BUILD_CANDIDATE_MANIFEST_V4.1.0_hotfix.json"
+  ],
+  "validation": {
+    "pytest": "1418 passed, 121 subtests passed",
+    "pytest_new_tests": 22,
+    "pytest_file": "tests/test_installer_uninstall_process_hotfix.py",
+    "compileall": "exit 0",
+    "exe_sha_reconfirmed": "68287AE09F52B118F97380407742FB460EC8E71CA9013A2BF5F6DAF5DCF9167F"
+  },
+  "human_validation_required": [
+    "instalar V4.1; abrir; ativar iniciar com Windows; confirmar tray",
+    "deixar o app rodando/minimizado na bandeja e iniciar a desinstalacao SEM fechar o app",
+    "o uninstall deve encerrar o processo sozinho; nenhum Aika_Optimizer_V4.1.exe no Gerenciador de Tarefas",
+    "icone da bandeja desaparece; C:\\Program Files\\AIKA Optimizer removido; pasta nao fica em uso",
+    "atalhos removidos; entrada em Apps Instalados removida; HKCU Run do Optimizer removido",
+    "apos reboot o Optimizer NAO inicia; backups/config do usuario e cliente AIKA preservados"
+  ],
+  "next_steps": {
+    "upgrade_v40_to_v41": "NAO executado automaticamente — somente apos o uninstall passar na validacao humana",
+    "github_release": "NAO PUBLICADO",
+    "tag": "NAO CRIADA"
+  },
+  "recommendation": "LIBERAR NOVO INSTALLER CANDIDATE PARA RETESTE DE UNINSTALL"
+}
