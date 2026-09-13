@@ -691,9 +691,43 @@ def _adotar_legados_pendentes():
     return resultado
 
 
+def _exe_do_artefato_prioridade(nome_arquivo):
+    """Executável AIKA de um artefato ``backup_prioridade_<exe>``; None se não for um."""
+    nome = str(nome_arquivo or "")
+    prefixo = "backup_prioridade_"
+    if not nome.lower().startswith(prefixo):
+        return None
+    exe = _normalizar_nome_ifeo(nome[len(prefixo):])
+    if exe is None or exe not in _executaveis_ifeo_permitidos():
+        return None
+    return exe
+
+
 def fazer_backup_registro(chave_completa, nome_arquivo):
-    """Exporta backup de Registro e retorna True somente se o arquivo existir e não estiver vazio."""
+    """Exporta backup de Registro e retorna True somente se o arquivo existir e não estiver vazio.
+
+    Exceção documentada — artefato legado de prioridade
+    (``backup_prioridade_<exe>``): quando a chave IFEO do executável AINDA NÃO
+    EXISTE não há estado anterior a preservar, e o ``reg export`` falharia por
+    ausência de chave (código de saída 1). Isso NÃO é erro: a baseline do
+    estado original já é registrada pelo ownership moderno
+    (``ifeo_state.json``, via ``garantir_ifeo_ownership``), que é o que a
+    restauração realmente usa — ``restaurar_registro_sistema`` exclui
+    ``backup_prioridade_*`` do import cego. A ausência da chave é o estado
+    inicial normal (cliente nunca otimizado/inicializado) e não pode abortar
+    a Otimização Global.
+
+    Qualquer outro artefato (e o artefato de prioridade quando a chave EXISTE)
+    continua exigindo exportação bem-sucedida: falhas reais continuam sendo
+    reportadas.
+    """
     try:
+        exe_prioridade = _exe_do_artefato_prioridade(nome_arquivo)
+        if exe_prioridade is not None and not _ifeo_key_existe(exe_prioridade):
+            log(f"[SEGURANÇA] IFEO/{exe_prioridade}: chave ainda não existe — "
+                f"nada a exportar ({nome_arquivo}.reg); estado original já "
+                f"registrado pela baseline de ownership (ifeo_state.json).")
+            return True
         os.makedirs(PASTA_BACKUP_REG, exist_ok=True)
         destino = os.path.join(PASTA_BACKUP_REG, f"{nome_arquivo}.reg")
         if os.path.isfile(destino) and os.path.getsize(destino) > 0:
